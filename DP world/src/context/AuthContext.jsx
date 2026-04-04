@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }) => {
       if (userData.role === 'CHA_AGENT') navigate('/cha/dashboard');
       else if (userData.role === 'GOVT_OFFICIAL') navigate('/govt/dashboard');
       else if (userData.role === 'ADMIN') navigate('/admin/dashboard');
+      else if (userData.role === 'CBI') navigate('/cbi');
 
       return { success: true };
     } catch (err) {

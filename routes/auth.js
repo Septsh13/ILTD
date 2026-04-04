@@ -9,6 +9,7 @@ const { body } = require('express-validator');
 const { login, verifyOtpHandler } = require('../controllers/authController');
 const { validate } = require('../middleware/validate');
 const { auditLogger } = require('../middleware/auditLogger');
+const { authenticate } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(auditLogger);
@@ -38,5 +39,11 @@ router.post(
   validate,
   verifyOtpHandler
 );
+
+// GET /auth/me
+router.get('/me', authenticate, require('../controllers/authController').getMe);
+
+// PUT /auth/me
+router.put('/me', authenticate, require('../controllers/authController').updateMe);
 
 module.exports = router;

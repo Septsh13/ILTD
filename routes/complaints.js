@@ -17,12 +17,14 @@ router.use(auditLogger);
 router.post(
   '/',
   [
-    body('subject').trim().notEmpty().withMessage('subject is required.'),
-    body('description').trim().notEmpty().withMessage('description is required.'),
-    body('complainant_name').trim().notEmpty().withMessage('complainant_name is required.'),
-    body('complainant_email').trim().isEmail().withMessage('complainant_email must be a valid email.'),
-    body('complainant_phone').optional().trim().isLength({ min: 5 }).withMessage('complainant_phone must be at least 5 characters.'),
-    body('related_user_id').optional().isUUID().withMessage('related_user_id must be a valid UUID.'),
+    body('subject').optional().trim().isString(),
+    body('complaint').trim().notEmpty().withMessage('complaint description is required.'),
+    body('type').equals('BRIBERY').withMessage('Only BRIBERY type is allowed for complaints.'),
+    body('shipment_id').optional().isString(),
+    body('complainant_name').optional().trim().isString(),
+    body('complainant_email').optional().trim().isEmail(),
+    body('complainant_phone').optional().trim().isString(),
+    body('related_user_id').optional().isUUID(),
   ],
   validate,
   submitComplaint

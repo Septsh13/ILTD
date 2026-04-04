@@ -10,7 +10,6 @@ const crypto = require('crypto');
 const axios = require('axios');
 const { pool } = require('../config/db');
 const { encryptIdentity, decryptIdentity } = require('../services/encryptionService');
-const { notifyAllTeamsAboutComplaint } = require('../services/notificationService');
 
 // Formspree endpoint
 const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xojpkeap';
@@ -19,7 +18,9 @@ const FORMSPREE_ENDPOINT = 'https://formspree.io/f/xojpkeap';
 const submitComplaint = async (req, res) => {
   const {
     subject,
-    description,
+    complaint,
+    shipment_id,
+    type,
     related_user_id,
     // Complainant identity (encrypted before storage)
     complainant_name,
@@ -48,25 +49,25 @@ const submitComplaint = async (req, res) => {
 
     // Insert complaint
     const { rows: complaintRows } = await client.query(
-      `INSERT INTO complaints (tracking_token, subject, description, related_user_id)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO complaints (tracking_token, subject, description, shipment_id, related_user_id)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING id, tracking_token, status, created_at`,
-      [tracking_token, subject, description, related_user_id || null]
+      [tracking_token, subject || 'Bribery specific complaint', complaint, shipment_id || null, related_user_id || null]
     );
 
-    const complaint = complaintRows[0];
+    const c = complaintRows[0];
 
-    // Encrypt and store complainant identity
+    // Encrypt and store complainant identity (fallback to N/A for anonymous CHA agents submitting)
     const { encryptedName, encryptedEmail, encryptedPhone, iv } = encryptIdentity({
-      name:  complainant_name,
-      email: complainant_email,
+      name:  complainant_name || 'Anonymous User',
+      email: complainant_email || 'anonymous@clearpath.gov',
       phone: complainant_phone || null,
     });
 
     await client.query(
       `INSERT INTO complaint_identity (complaint_id, encrypted_name, encrypted_email, encrypted_phone, iv)
        VALUES ($1, $2, $3, $4, $5)`,
-      [complaint.id, encryptedName, encryptedEmail, encryptedPhone, iv]
+      [c.id, encryptedName, encryptedEmail, encryptedPhone, iv]
     );
 
     await client.query('COMMIT');
@@ -77,9 +78,9 @@ const submitComplaint = async (req, res) => {
         encrypted_name: encryptedName,
         tracking_token: tracking_token,
         subject: subject,
-        complaint_description: description,
+        complaint_description: complaint,
         related_user_id: related_user_id || 'ANONYMOUS',
-        submitted_at: complaint.created_at,
+        submitted_at: c.created_at,
         // Use encrypted email for admin contact purposes
         encrypted_email: encryptedEmail,
       }, {
@@ -98,9 +99,9 @@ const submitComplaint = async (req, res) => {
 
     return res.status(201).json({
       message: 'Complaint submitted successfully. Save your tracking token — it cannot be recovered.',
-      tracking_token: complaint.tracking_token,
-      status:         complaint.status,
-      submitted_at:   complaint.created_at,
+      tracking_token: c.tracking_token,
+      status:         c.status,
+      submitted_at:   c.created_at,
     });
   } catch (err) {
     await client.query('ROLLBACK');

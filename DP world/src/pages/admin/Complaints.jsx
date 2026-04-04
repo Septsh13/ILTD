@@ -49,12 +49,12 @@ export const AdminComplaints = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brown-800">Complaints Management</h1>
-          <p className="text-brown-500 mt-1">Review and manage all complaints filed on the platform.</p>
+          <h1 className="text-2xl font-bold text-blue-800">Complaints Management</h1>
+          <p className="text-blue-500 mt-1">Review and manage all complaints filed on the platform.</p>
         </div>
         <button
           onClick={fetchComplaints}
-          className="p-2 rounded-lg hover:bg-brown-50 text-brown-400 hover:text-brown-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-700 transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -83,11 +83,11 @@ export const AdminComplaints = () => {
           <tbody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-brown-400 py-8">Loading…</TableCell>
+                <TableCell colSpan={6} className="text-center text-blue-400 py-8">Loading…</TableCell>
               </TableRow>
             ) : complaints.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-brown-400 py-8">No complaints found.</TableCell>
+                <TableCell colSpan={6} className="text-center text-blue-400 py-8">No complaints found.</TableCell>
               </TableRow>
             ) : (
               complaints.map((c) => (
@@ -95,7 +95,7 @@ export const AdminComplaints = () => {
                   <TableCell className="font-semibold font-mono text-sm">{c.tracking_token?.slice(0, 12)}…</TableCell>
                   <TableCell>{c.subject}</TableCell>
                   <TableCell>{c.related_user_id?.slice(0, 8) || '—'}</TableCell>
-                  <TableCell className="text-brown-500 text-sm">
+                  <TableCell className="text-blue-500 text-sm">
                     {new Date(c.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
@@ -133,34 +133,34 @@ export const AdminComplaints = () => {
           <div className="space-y-4 text-sm">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <span className="font-semibold text-brown-600">Tracking Token:</span>
-                <p className="font-mono text-brown-800 text-xs break-all">{viewModal.tracking_token}</p>
+                <span className="font-semibold text-blue-600">Tracking Token:</span>
+                <p className="font-mono text-blue-800 text-xs break-all">{viewModal.tracking_token}</p>
               </div>
               <div>
-                <span className="font-semibold text-brown-600">Status:</span>
+                <span className="font-semibold text-blue-600">Status:</span>
                 <p><Badge variant={viewModal.status === 'RESOLVED' ? 'resolved' : 'pending'}>{viewModal.status}</Badge></p>
               </div>
               <div>
-                <span className="font-semibold text-brown-600">Filed:</span>
-                <p className="text-brown-800">{new Date(viewModal.created_at).toLocaleString()}</p>
+                <span className="font-semibold text-blue-600">Filed:</span>
+                <p className="text-blue-800">{new Date(viewModal.created_at).toLocaleString()}</p>
               </div>
               <div>
-                <span className="font-semibold text-brown-600">Related User:</span>
-                <p className="font-mono text-brown-800 text-xs">{viewModal.related_user_id || 'None'}</p>
+                <span className="font-semibold text-blue-600">Related User:</span>
+                <p className="font-mono text-blue-800 text-xs">{viewModal.related_user_id || 'None'}</p>
               </div>
             </div>
             <div>
-              <span className="font-semibold text-brown-600">Subject:</span>
-              <p className="text-brown-800">{viewModal.subject}</p>
+              <span className="font-semibold text-blue-600">Subject:</span>
+              <p className="text-blue-800">{viewModal.subject}</p>
             </div>
             <div>
-              <span className="font-semibold text-brown-600">Description:</span>
-              <p className="text-brown-800">{viewModal.description}</p>
+              <span className="font-semibold text-blue-600">Description:</span>
+              <p className="text-blue-800">{viewModal.description}</p>
             </div>
             {viewModal.admin_notes && (
               <div>
-                <span className="font-semibold text-brown-600">Admin Notes:</span>
-                <p className="text-brown-800">{viewModal.admin_notes}</p>
+                <span className="font-semibold text-blue-600">Admin Notes:</span>
+                <p className="text-blue-800">{viewModal.admin_notes}</p>
               </div>
             )}
           </div>

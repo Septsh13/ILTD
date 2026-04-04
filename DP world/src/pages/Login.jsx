@@ -51,25 +51,25 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-beige-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Decorative background */}
-      <div className="absolute top-0 left-0 w-full h-96 bg-brown-600/5 -skew-y-6 transform origin-top-left -z-10"></div>
+      <div className="absolute top-0 left-0 w-full h-96 bg-blue-600/5 -skew-y-6 transform origin-top-left -z-10"></div>
 
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-brown-200 shadow-sm mb-4">
-            <span className="text-2xl font-extrabold text-brown-600">CP</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-blue-200 shadow-sm mb-4">
+            <span className="text-2xl font-extrabold text-blue-600">CP</span>
           </div>
-          <h1 className="text-3xl font-bold text-brown-800">ClearPath</h1>
-          <p className="text-brown-600 mt-2">Logistics Transparency Platform</p>
+          <h1 className="text-3xl font-bold text-blue-800">ClearPath</h1>
+          <p className="text-blue-600 mt-2">Logistics Transparency Platform</p>
         </div>
 
-        <Card className="shadow-lg border-brown-200 backdrop-blur-sm bg-white/90">
+        <Card className="shadow-lg border-blue-200 backdrop-blur-sm bg-white/90">
           <CardHeader className="bg-transparent border-b-0 pt-8 pb-0 text-center">
             <CardTitle className="text-2xl font-bold">
               {step === 1 ? 'Sign In' : 'Verify OTP'}
             </CardTitle>
-            <p className="text-sm text-brown-500 mt-1">
+            <p className="text-sm text-blue-500 mt-1">
               {step === 1
                 ? 'Enter your Employee ID and password'
                 : `OTP sent for ${employeeId}`}
@@ -77,8 +77,8 @@ export const Login = () => {
 
             {/* Step indicator */}
             <div className="flex items-center justify-center gap-2 mt-4">
-              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 1 ? 'bg-brown-600' : 'bg-brown-200'}`} />
-              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 2 ? 'bg-brown-600' : 'bg-brown-200'}`} />
+              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-blue-200'}`} />
+              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-blue-200'}`} />
             </div>
           </CardHeader>
 
@@ -93,36 +93,36 @@ export const Login = () => {
             {step === 1 ? (
               <form onSubmit={handleStep1} className="space-y-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-700">Employee ID</label>
+                  <label className="text-sm font-semibold text-blue-700">Employee ID</label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400" />
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
                     <input
                       type="text"
                       value={employeeId}
                       onChange={(e) => setEmployeeId(e.target.value.toUpperCase())}
                       placeholder="e.g. ADMIN001, CHA001, GOVT001"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-brown-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brown-500 transition-shadow placeholder:text-brown-300"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300"
                       required
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-700">Password</label>
+                  <label className="text-sm font-semibold text-blue-700">Password</label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="w-full pl-10 pr-10 py-3 bg-white border border-brown-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brown-500 transition-shadow placeholder:text-brown-300"
+                      className="w-full pl-10 pr-10 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-brown-400 hover:text-brown-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -148,15 +148,15 @@ export const Login = () => {
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-brown-700">One-Time Password</label>
+                  <label className="text-sm font-semibold text-blue-700">One-Time Password</label>
                   <div className="relative">
-                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400" />
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
                     <input
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       placeholder="6-digit OTP"
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-brown-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brown-500 transition-shadow placeholder:text-brown-300 tracking-widest text-center text-lg font-mono"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300 tracking-widest text-center text-lg font-mono"
                       maxLength={6}
                       required
                     />
@@ -174,7 +174,7 @@ export const Login = () => {
                 <button
                   type="button"
                   onClick={() => { setStep(1); setError(''); setOtp(''); }}
-                  className="w-full text-center text-sm text-brown-400 hover:text-brown-600 transition-colors"
+                  className="w-full text-center text-sm text-blue-400 hover:text-blue-600 transition-colors"
                 >
                   ← Back to credentials
                 </button>
@@ -183,7 +183,7 @@ export const Login = () => {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-brown-400 mt-8">
+        <p className="text-center text-xs text-blue-400 mt-8">
           Secured by ClearPath Logistics © 2026
         </p>
       </div>

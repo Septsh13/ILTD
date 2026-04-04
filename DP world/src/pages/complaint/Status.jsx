@@ -43,8 +43,8 @@ export const ComplaintStatus = () => {
     <div className="space-y-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brown-800">Track My Complaint</h1>
-          <p className="text-brown-500 mt-1">Enter your tracking token to check the status of your grievance.</p>
+          <h1 className="text-2xl font-bold text-blue-800">Track My Complaint</h1>
+          <p className="text-blue-500 mt-1">Enter your tracking token to check the status of your grievance.</p>
         </div>
         <Button onClick={() => window.location.href = '/complaint/new'}>
           File New Complaint
@@ -56,13 +56,13 @@ export const ComplaintStatus = () => {
         <CardContent className="p-6">
           <form onSubmit={handleSearch} className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brown-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
               <input
                 type="text"
                 value={trackingToken}
                 onChange={(e) => setTrackingToken(e.target.value)}
                 placeholder="Enter your complaint tracking token…"
-                className="w-full pl-10 pr-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                className="w-full pl-10 pr-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
                 required
               />
             </div>
@@ -89,31 +89,31 @@ export const ComplaintStatus = () => {
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center gap-3 mb-2">
               <CheckCircle className="w-6 h-6 text-emerald-500" />
-              <h2 className="text-lg font-bold text-brown-800">Complaint Found</h2>
+              <h2 className="text-lg font-bold text-blue-800">Complaint Found</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div>
-                <p className="font-semibold text-brown-500 uppercase tracking-wide text-xs">Subject</p>
-                <p className="text-brown-800 mt-1">{complaint.subject}</p>
+                <p className="font-semibold text-blue-500 uppercase tracking-wide text-xs">Subject</p>
+                <p className="text-blue-800 mt-1">{complaint.subject}</p>
               </div>
               <div>
-                <p className="font-semibold text-brown-500 uppercase tracking-wide text-xs">Status</p>
+                <p className="font-semibold text-blue-500 uppercase tracking-wide text-xs">Status</p>
                 <div className="mt-1">
                   <Badge variant={statusVariant(complaint.status)}>{complaint.status}</Badge>
                 </div>
               </div>
               <div>
-                <p className="font-semibold text-brown-500 uppercase tracking-wide text-xs">Filed</p>
-                <p className="text-brown-800 mt-1">{new Date(complaint.created_at).toLocaleDateString()}</p>
+                <p className="font-semibold text-blue-500 uppercase tracking-wide text-xs">Filed</p>
+                <p className="text-blue-800 mt-1">{new Date(complaint.created_at).toLocaleDateString()}</p>
               </div>
               <div>
-                <p className="font-semibold text-brown-500 uppercase tracking-wide text-xs">Last Updated</p>
-                <p className="text-brown-800 mt-1">{new Date(complaint.updated_at).toLocaleDateString()}</p>
+                <p className="font-semibold text-blue-500 uppercase tracking-wide text-xs">Last Updated</p>
+                <p className="text-blue-800 mt-1">{new Date(complaint.updated_at).toLocaleDateString()}</p>
               </div>
               {complaint.admin_notes && (
                 <div className="col-span-2 md:col-span-3">
-                  <p className="font-semibold text-brown-500 uppercase tracking-wide text-xs">Admin Notes</p>
-                  <p className="text-brown-800 mt-1">{complaint.admin_notes}</p>
+                  <p className="font-semibold text-blue-500 uppercase tracking-wide text-xs">Admin Notes</p>
+                  <p className="text-blue-800 mt-1">{complaint.admin_notes}</p>
                 </div>
               )}
             </div>

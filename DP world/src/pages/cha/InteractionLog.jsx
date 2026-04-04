@@ -51,12 +51,12 @@ export const ChaInteractionLog = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brown-800">Interaction Log</h1>
-          <p className="text-brown-500 mt-1">Full timeline of interactions on your shipments and documents.</p>
+          <h1 className="text-2xl font-bold text-blue-800">Interaction Log</h1>
+          <p className="text-blue-500 mt-1">Full timeline of interactions on your shipments and documents.</p>
         </div>
         <button
           onClick={fetchLogs}
-          className="p-2 rounded-lg hover:bg-brown-50 text-brown-400 hover:text-brown-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-700 transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -82,11 +82,11 @@ export const ChaInteractionLog = () => {
           <tbody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-brown-400 py-8">Loading…</TableCell>
+                <TableCell colSpan={6} className="text-center text-blue-400 py-8">Loading…</TableCell>
               </TableRow>
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-brown-400 py-8">No activity yet.</TableCell>
+                <TableCell colSpan={6} className="text-center text-blue-400 py-8">No activity yet.</TableCell>
               </TableRow>
             ) : (
               logs.map((log) => {
@@ -98,14 +98,14 @@ export const ChaInteractionLog = () => {
                         {typeIcons[type]}
                       </span>
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-brown-600">
+                    <TableCell className="font-mono text-sm text-blue-600">
                       {new Date(log.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell className="font-semibold">{log.action}</TableCell>
                     <TableCell>
                       <Badge>{log.role || 'System'}</Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-sm text-brown-500">{log.ip_address || '—'}</TableCell>
+                    <TableCell className="font-mono text-sm text-blue-500">{log.ip_address || '—'}</TableCell>
                     <TableCell>
                       <Badge variant={log.status_code < 400 ? 'approved' : 'rejected'}>
                         {log.status_code}

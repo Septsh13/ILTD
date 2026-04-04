@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../utils/cn';
 
 export const Table = ({ className, children, ...props }) => (
-  <div className="w-full overflow-auto rounded-xl border border-brown-200 bg-white">
+  <div className="w-full overflow-auto rounded-xl border border-blue-200 bg-white">
     <table className={cn("w-full text-sm text-left", className)} {...props}>
       {children}
     </table>
@@ -10,13 +10,13 @@ export const Table = ({ className, children, ...props }) => (
 );
 
 export const TableHeader = ({ className, children, ...props }) => (
-  <thead className={cn("text-xs text-brown-600 uppercase bg-beige-50 border-b border-brown-200", className)} {...props}>
+  <thead className={cn("text-xs text-blue-600 uppercase bg-slate-50 border-b border-blue-200", className)} {...props}>
     {children}
   </thead>
 );
 
 export const TableRow = ({ className, children, ...props }) => (
-  <tr className={cn("border-b last:border-0 border-brown-100 hover:bg-beige-50/50 transition-colors", className)} {...props}>
+  <tr className={cn("border-b last:border-0 border-blue-100 hover:bg-slate-50/50 transition-colors", className)} {...props}>
     {children}
   </tr>
 );
@@ -28,7 +28,7 @@ export const TableHead = ({ className, children, ...props }) => (
 );
 
 export const TableCell = ({ className, children, ...props }) => (
-  <td className={cn("px-6 py-4 text-brown-800", className)} {...props}>
+  <td className={cn("px-6 py-4 text-blue-800", className)} {...props}>
     {children}
   </td>
 );

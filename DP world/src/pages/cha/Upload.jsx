@@ -61,8 +61,8 @@ export const ChaUpload = () => {
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-brown-800">Upload Document</h1>
-        <p className="text-brown-500 mt-1">Submit clearance documents for government review.</p>
+        <h1 className="text-2xl font-bold text-blue-800">Upload Document</h1>
+        <p className="text-blue-500 mt-1">Submit clearance documents for government review.</p>
       </div>
 
       {result && (
@@ -86,22 +86,22 @@ export const ChaUpload = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-brown-700">Shipment UUID</label>
+                <label className="text-sm font-semibold text-blue-700">Shipment UUID</label>
                 <input
                   type="text"
                   value={shipmentId}
                   onChange={(e) => setShipmentId(e.target.value)}
                   placeholder="Paste shipment UUID"
-                  className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-brown-700">Document Type</label>
+                <label className="text-sm font-semibold text-blue-700">Document Type</label>
                 <select
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
-                  className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 text-brown-800"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-blue-800"
                   required
                 >
                   <option value="">Select type...</option>
@@ -115,29 +115,29 @@ export const ChaUpload = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">
-                Assign to Govt Official UUID <span className="font-normal text-brown-400">(optional)</span>
+              <label className="text-sm font-semibold text-blue-700">
+                Assign to Govt Official UUID <span className="font-normal text-blue-400">(optional)</span>
               </label>
               <input
                 type="text"
                 value={assignedTo}
                 onChange={(e) => setAssignedTo(e.target.value)}
                 placeholder="Govt official UUID"
-                className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">Upload Files</label>
-              <div className="border-2 border-dashed border-brown-200 rounded-xl p-8 text-center hover:border-brown-400 transition-colors bg-beige-50/50">
-                <UploadCloud className="w-10 h-10 text-brown-400 mx-auto mb-3" />
-                <p className="text-sm text-brown-600 font-medium">Drag & drop files here, or click to browse</p>
-                <p className="text-xs text-brown-400 mt-1">PDF, JPG, PNG up to 10MB each</p>
+              <label className="text-sm font-semibold text-blue-700">Upload Files</label>
+              <div className="border-2 border-dashed border-blue-200 rounded-xl p-8 text-center hover:border-blue-400 transition-colors bg-slate-50/50">
+                <UploadCloud className="w-10 h-10 text-blue-400 mx-auto mb-3" />
+                <p className="text-sm text-blue-600 font-medium">Drag & drop files here, or click to browse</p>
+                <p className="text-xs text-blue-400 mt-1">PDF, JPG, PNG up to 10MB each</p>
                 <input
                   type="file"
                   multiple
                   onChange={handleFileChange}
-                  className="mt-3 text-sm text-brown-600"
+                  className="mt-3 text-sm text-blue-600"
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
               </div>
@@ -145,21 +145,21 @@ export const ChaUpload = () => {
 
             {files.length > 0 && (
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-brown-700">Selected Files ({files.length})</label>
+                <label className="text-sm font-semibold text-blue-700">Selected Files ({files.length})</label>
                 <div className="space-y-2">
                   {files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-beige-50 rounded-xl border border-brown-100">
+                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-blue-100">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-5 h-5 text-brown-500" />
+                        <FileText className="w-5 h-5 text-blue-500" />
                         <div>
-                          <p className="text-sm font-medium text-brown-800">{file.name}</p>
-                          <p className="text-xs text-brown-400">{(file.size / 1024).toFixed(1)} KB</p>
+                          <p className="text-sm font-medium text-blue-800">{file.name}</p>
+                          <p className="text-xs text-blue-400">{(file.size / 1024).toFixed(1)} KB</p>
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeFile(index)}
-                        className="p-1.5 text-brown-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-blue-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

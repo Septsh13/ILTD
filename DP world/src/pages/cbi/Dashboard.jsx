@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from "../../services/api";
 import { AlertCircle, CheckCircle, Clock, FileText, Eye } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export function CBIDashboard() {
   const [complaints, setComplaints] = useState([]);
@@ -201,12 +202,12 @@ export function CBIDashboard() {
                           {new Date(complaint.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-sm">
-                          <a
-                            href={`/cbi/complaints/${complaint.id}`}
+                          <Link
+                            to={`/cbi/complaints/${complaint.id}`}
                             className="text-blue-600 hover:text-blue-900 font-medium"
                           >
                             Review
-                          </a>
+                          </Link>
                         </td>
                       </tr>
                     ))}

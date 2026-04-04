@@ -47,20 +47,20 @@ export const GovtPerformance = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brown-800">Performance Dashboard</h1>
-        <p className="text-brown-500 mt-1">Your review statistics and SLA compliance metrics.</p>
+        <h1 className="text-2xl font-bold text-blue-800">Performance Dashboard</h1>
+        <p className="text-blue-500 mt-1">Your review statistics and SLA compliance metrics.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: 'Total Reviewed', value: '142', color: 'text-brown-800' },
+          { label: 'Total Reviewed', value: '142', color: 'text-blue-800' },
           { label: 'Approved', value: '92', color: 'text-emerald-600' },
           { label: 'Rejected', value: '21', color: 'text-red-600' },
           { label: 'SLA Compliance', value: '96.5%', color: 'text-blue-600' },
         ].map((stat) => (
           <Card key={stat.label}>
             <CardContent className="p-6">
-              <p className="text-sm font-bold text-brown-500 uppercase tracking-wide">{stat.label}</p>
+              <p className="text-sm font-bold text-blue-500 uppercase tracking-wide">{stat.label}</p>
               <p className={`text-3xl font-bold mt-2 ${stat.color}`}>{stat.value}</p>
             </CardContent>
           </Card>

@@ -41,12 +41,12 @@ export const AdminAuditLogs = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brown-800">Audit Logs</h1>
-          <p className="text-brown-500 mt-1">Complete log of all platform actions for compliance and review.</p>
+          <h1 className="text-2xl font-bold text-blue-800">Audit Logs</h1>
+          <p className="text-blue-500 mt-1">Complete log of all platform actions for compliance and review.</p>
         </div>
         <button
           onClick={fetchLogs}
-          className="p-2 rounded-lg hover:bg-brown-50 text-brown-400 hover:text-brown-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-700 transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -74,11 +74,11 @@ export const AdminAuditLogs = () => {
           <tbody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-brown-400 py-8">Loading…</TableCell>
+                <TableCell colSpan={5} className="text-center text-blue-400 py-8">Loading…</TableCell>
               </TableRow>
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-brown-400 py-8">No logs yet.</TableCell>
+                <TableCell colSpan={5} className="text-center text-blue-400 py-8">No logs yet.</TableCell>
               </TableRow>
             ) : (
               logs.map((log) => (
@@ -87,10 +87,10 @@ export const AdminAuditLogs = () => {
                     {new Date(log.created_at).toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    {log.role ? <Badge>{log.role}</Badge> : <span className="text-brown-300 text-xs">Public</span>}
+                    {log.role ? <Badge>{log.role}</Badge> : <span className="text-blue-300 text-xs">Public</span>}
                   </TableCell>
                   <TableCell className="font-semibold">{log.action}</TableCell>
-                  <TableCell className="font-mono text-sm text-brown-500">{log.ip_address || '—'}</TableCell>
+                  <TableCell className="font-mono text-sm text-blue-500">{log.ip_address || '—'}</TableCell>
                   <TableCell>
                     <Badge variant={statusVariant(log.status_code)}>
                       {log.status_code} {statusLabel(log.status_code)}

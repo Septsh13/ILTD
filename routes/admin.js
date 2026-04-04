@@ -15,6 +15,8 @@ const {
   getAllUsers, 
   getAdminSummary,
   getComplaintDecrypted,
+  createShipment,
+  getShipmentReviews,
 } = require('../controllers/adminController');
 const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
@@ -25,6 +27,17 @@ const router = express.Router();
 
 // Apply auth + ADMIN role guard + audit logger to all admin routes
 router.use(authenticate, requireRole('ADMIN'), auditLogger);
+
+// POST /admin/shipments
+router.post(
+  '/shipments',
+  [
+    body('title').trim().notEmpty().withMessage('title is required.'),
+    body('description').trim().notEmpty().withMessage('description is required.'),
+  ],
+  validate,
+  createShipment
+);
 
 // GET /admin/summary
 router.get('/summary', getAdminSummary);
@@ -44,6 +57,9 @@ router.get(
   validate,
   getAllComplaints
 );
+
+// GET /admin/reviews
+router.get('/reviews', getShipmentReviews);
 
 // GET /admin/audit-logs
 router.get(

@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/Card';
 import { Button } from '../../components/Button';
 import { CheckCircle, AlertCircle, UploadCloud, Copy, X } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import api from '../../services/api';
 
 export const FileComplaint = () => {
+  const location = useLocation();
+  const defaultShipmentId = location.state?.defaultShipmentId || '';
+
   const [form, setForm] = useState({
     subject: '',
-    description: '',
+    complaint: '',
+    shipment_id: defaultShipmentId,
     complainant_name: '',
     complainant_email: '',
     complainant_phone: '',
@@ -52,8 +57,10 @@ export const FileComplaint = () => {
 
     try {
       const payload = {
-        subject: form.subject,
-        description: form.description,
+        subject: form.subject || 'Bribery specific complaint',
+        complaint: form.complaint,
+        type: 'BRIBERY',
+        shipment_id: form.shipment_id || undefined,
         complainant_name: form.complainant_name,
         complainant_email: form.complainant_email,
         complainant_phone: form.complainant_phone || undefined,
@@ -70,7 +77,8 @@ export const FileComplaint = () => {
       // Reset form
       setForm({
         subject: '',
-        description: '',
+        complaint: '',
+        shipment_id: defaultShipmentId,
         complainant_name: '',
         complainant_email: '',
         complainant_phone: '',
@@ -94,8 +102,8 @@ export const FileComplaint = () => {
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-brown-800">File a Complaint</h1>
-        <p className="text-brown-500 mt-1">Report a grievance against a government official or process. Your complaint will be investigated promptly.</p>
+        <h1 className="text-2xl font-bold text-red-800">File a Bribery / Corruption Complaint</h1>
+        <p className="text-blue-500 mt-1">Report severe corruption or bribery issues against a government process. Your complaint will be investigated by the CBI.</p>
       </div>
 
       {result && (
@@ -134,61 +142,73 @@ export const FileComplaint = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">Subject</label>
+              <label className="text-sm font-semibold text-blue-700">Shipment ID <span className="font-normal text-blue-400">(optional)</span></label>
+              <input
+                type="text"
+                name="shipment_id"
+                value={form.shipment_id}
+                onChange={handleChange}
+                placeholder="E.g. SHP001"
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-blue-700">Subject</label>
               <input
                 type="text"
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="Brief title of your complaint"
-                className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">Description</label>
+              <label className="text-sm font-semibold text-blue-700">Description</label>
               <textarea
-                name="description"
-                value={form.description}
+                name="complaint"
+                value={form.complaint}
                 onChange={handleChange}
-                placeholder="Describe the issue in detail…"
+                placeholder="Describe the corruption issue in detail…"
                 rows={4}
-                className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300 resize-none"
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300 resize-none"
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-brown-700">Your Name</label>
+                <label className="text-sm font-semibold text-blue-700">Your Name</label>
                 <input
                   type="text"
                   name="complainant_name"
                   value={form.complainant_name}
                   onChange={handleChange}
                   placeholder="Full name"
-                  className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
                   required
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-brown-700">Email Address</label>
+                <label className="text-sm font-semibold text-blue-700">Email Address</label>
                 <input
                   type="email"
                   name="complainant_email"
                   value={form.complainant_email}
                   onChange={handleChange}
                   placeholder="you@example.com"
-                  className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                  className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
                   required
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">
-                Phone Number <span className="font-normal text-brown-400">(optional)</span>
+              <label className="text-sm font-semibold text-blue-700">
+                Phone Number <span className="font-normal text-blue-400">(optional)</span>
               </label>
               <input
                 type="tel"
@@ -196,13 +216,13 @@ export const FileComplaint = () => {
                 value={form.complainant_phone}
                 onChange={handleChange}
                 placeholder="+91 XXXXX XXXXX"
-                className="w-full px-4 py-3 border border-brown-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-brown-500 placeholder:text-brown-300"
+                className="w-full px-4 py-3 border border-blue-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-blue-300"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-brown-700">
-                Attachment <span className="font-normal text-brown-400">(optional)</span>
+              <label className="text-sm font-semibold text-blue-700">
+                Attachment <span className="font-normal text-blue-400">(optional)</span>
               </label>
               <div className="relative">
                 <input
@@ -214,14 +234,14 @@ export const FileComplaint = () => {
                 />
                 <label
                   htmlFor="file-upload"
-                  className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-brown-200 rounded-xl cursor-pointer hover:border-brown-400 hover:bg-beige-50 transition-colors"
+                  className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-blue-200 rounded-xl cursor-pointer hover:border-blue-400 hover:bg-slate-50 transition-colors"
                 >
-                  <UploadCloud className="w-5 h-5 text-brown-400" />
+                  <UploadCloud className="w-5 h-5 text-blue-400" />
                   <div className="text-center">
-                    <p className="text-sm font-medium text-brown-700">
+                    <p className="text-sm font-medium text-blue-700">
                       {file ? file.name : 'Click to upload or drag and drop'}
                     </p>
-                    <p className="text-xs text-brown-400 mt-1">PDF, JPG, PNG, GIF, MP4 up to 10MB</p>
+                    <p className="text-xs text-blue-400 mt-1">PDF, JPG, PNG, GIF, MP4 up to 10MB</p>
                   </div>
                 </label>
               </div>

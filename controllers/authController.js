@@ -104,4 +104,63 @@ const verifyOtpHandler = async (req, res) => {
   }
 };
 
-module.exports = { login, verifyOtpHandler };
+const getMe = async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT 
+        u.id, u.employee_id, u.full_name, u.email, u.role,
+        c.license_number, c.agency_name, c.contact_phone,
+        g.department, g.designation, g.office_code
+      FROM users u
+      LEFT JOIN cha_agents c ON c.user_id = u.id
+      LEFT JOIN govt_officials g ON g.user_id = u.id
+      WHERE u.id = $1
+    `, [req.user.id]);
+    
+    if (rows.length === 0) return res.status(404).json({ error: 'User not found.' });
+    
+    return res.status(200).json({ user: rows[0] });
+  } catch (err) {
+    console.error('[AUTH] getMe error:', err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+const updateMe = async (req, res) => {
+  const { full_name, email, contact_phone, agency_name, designation, department } = req.body;
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Update core user details
+    await client.query(
+      `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email), updated_at = NOW() WHERE id = $3`,
+      [full_name, email, req.user.id]
+    );
+
+    // Update role specific details if they exist
+    if (req.user.role === 'CHA_AGENT') {
+      await client.query(
+        `UPDATE cha_agents SET contact_phone = COALESCE($1, contact_phone), agency_name = COALESCE($2, agency_name) WHERE user_id = $3`,
+        [contact_phone, agency_name, req.user.id]
+      );
+    } else if (req.user.role === 'GOVT_OFFICIAL') {
+      await client.query(
+        `UPDATE govt_officials SET designation = COALESCE($1, designation), department = COALESCE($2, department) WHERE user_id = $3`,
+        [designation, department, req.user.id]
+      );
+    }
+    
+    await client.query('COMMIT');
+    return res.status(200).json({ message: 'Profile updated successfully.' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('[AUTH] updateMe error:', err);
+    return res.status(500).json({ error: 'DB Error: ' + err.message });
+  } finally {
+    client.release();
+  }
+};
+
+module.exports = { login, verifyOtpHandler, getMe, updateMe };

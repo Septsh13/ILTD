@@ -39,8 +39,8 @@ export const AdminUsers = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brown-800">User Management</h1>
-        <p className="text-brown-500 mt-1">View and manage all platform users and their statuses.</p>
+        <h1 className="text-2xl font-bold text-blue-800">User Management</h1>
+        <p className="text-blue-500 mt-1">View and manage all platform users and their statuses.</p>
       </div>
 
       <Card>
@@ -68,8 +68,8 @@ export const AdminUsers = () => {
                 <TableCell className="font-semibold">{u.employee_id}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-brown-100 flex items-center justify-center">
-                      <User className="w-4 h-4 text-brown-500" />
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+                      <User className="w-4 h-4 text-blue-500" />
                     </div>
                     {u.full_name}
                   </div>

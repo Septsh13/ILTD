@@ -1,17 +1,11 @@
 /**
  * CHA Routes — Role: CHA_AGENT
- * POST /cha/shipments
  * GET  /cha/shipments
- * POST /cha/documents
- * POST /cha/interactions
- * POST /cha/mark-suspicious
  */
 
 const express = require('express');
-const { body, query } = require('express-validator');
-const {
-  getChaSummary, createShipment, getShipments, addDocument, logInteraction, markSuspicious,
-} = require('../controllers/chaController');
+const { query, body } = require('express-validator');
+const { getChaSummary, getShipments, acceptShipmentDecision, submitGeneralIssue } = require('../controllers/chaController');
 const { authenticate } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { validate } = require('../middleware/validate');
@@ -19,25 +13,10 @@ const { auditLogger } = require('../middleware/auditLogger');
 
 const router = express.Router();
 
-// Apply auth + role guard + audit logger to all CHA routes
 router.use(authenticate, requireRole('CHA_AGENT'), auditLogger);
 
 // GET /cha/summary
 router.get('/summary', getChaSummary);
-
-// POST /cha/shipments
-router.post(
-  '/shipments',
-  [
-    body('shipper_name').trim().notEmpty().withMessage('shipper_name is required.'),
-    body('consignee_name').trim().notEmpty().withMessage('consignee_name is required.'),
-    body('origin_port').trim().notEmpty().withMessage('origin_port is required.'),
-    body('destination_port').trim().notEmpty().withMessage('destination_port is required.'),
-    body('gross_weight_kg').optional().isFloat({ min: 0 }).withMessage('gross_weight_kg must be a positive number.'),
-  ],
-  validate,
-  createShipment
-);
 
 // GET /cha/shipments
 router.get(
@@ -52,42 +31,25 @@ router.get(
   getShipments
 );
 
-// POST /cha/documents
+// POST /cha/accept
 router.post(
-  '/documents',
+  '/accept',
   [
-    body('shipment_id').isUUID().withMessage('shipment_id must be a valid UUID.'),
-    body('document_type').trim().notEmpty().withMessage('document_type is required.'),
-    body('file_name').trim().notEmpty().withMessage('file_name is required.'),
-    body('file_url').trim().notEmpty().isURL().withMessage('file_url must be a valid URL.'),
-    body('assigned_to').optional().isUUID().withMessage('assigned_to must be a valid UUID.'),
+    body('shipment_id').notEmpty().withMessage('shipment_id is required.'),
   ],
   validate,
-  addDocument
+  acceptShipmentDecision
 );
 
-// POST /cha/interactions
+// POST /cha/reviews
 router.post(
-  '/interactions',
+  '/reviews',
   [
-    body('govt_user_id').isUUID().withMessage('govt_user_id must be a valid UUID.'),
-    body('subject').trim().notEmpty().withMessage('subject is required.'),
+    body('shipment_id').notEmpty().withMessage('shipment_id is required.'),
     body('message').trim().notEmpty().withMessage('message is required.'),
-    body('shipment_id').optional().isUUID().withMessage('shipment_id must be a valid UUID.'),
   ],
   validate,
-  logInteraction
-);
-
-// POST /cha/mark-suspicious
-router.post(
-  '/mark-suspicious',
-  [
-    body('shipment_id').isUUID().withMessage('shipment_id must be a valid UUID.'),
-    body('note').optional().isString(),
-  ],
-  validate,
-  markSuspicious
+  submitGeneralIssue
 );
 
 module.exports = router;

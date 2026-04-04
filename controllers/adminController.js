@@ -13,6 +13,39 @@
 const { pool } = require('../config/db');
 const { decryptIdentity } = require('../services/encryptionService');
 
+// ── Create Shipment (Admin-Only) ──────────────────────────────────────────────
+const createShipment = async (req, res) => {
+  const { title, description } = req.body;
+  const currentUserId = req.user.id;
+
+  try {
+    // Generate new SHP ID
+    // E.g. get count, add 1. A better way in prod is sequence, but count works for MVP.
+    const { rows: countRows } = await pool.query(`SELECT COUNT(*) FROM shipments`);
+    const nextNum = parseInt(countRows[0].count) + 1;
+    const shpId = `SHP${String(nextNum).padStart(3, '0')}`;
+
+    const { rows } = await pool.query(
+      `INSERT INTO shipments (id, title, description, created_by, status)
+       VALUES ($1, $2, $3, $4, 'PENDING')
+       RETURNING id, title, description, status, created_at`,
+      [shpId, title, description, currentUserId]
+    );
+
+    return res.status(201).json({
+      message: 'Shipment created successfully.',
+      shipment: rows[0]
+    });
+  } catch (err) {
+    if (err.code === '23505') {
+       // if SHP001 already exists because of concurrency or manual delete, retry with a random suffix or handle it.
+       return res.status(500).json({ error: 'Shipment ID generation conflict. Try again.' });
+    }
+    console.error('[ADMIN] createShipment error:', err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
 // ── All Complaints ────────────────────────────────────────────────────────────
 const getAllComplaints = async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
@@ -252,4 +285,20 @@ const getComplaintDecrypted = async (req, res) => {
   }
 };
 
-module.exports = { getAllComplaints, getAuditLogs, flagUser, getAllUsers, getAdminSummary, getComplaintDecrypted };
+// ── Shipment Reviews ──────────────────────────────────────────────────────────
+const getShipmentReviews = async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT r.id, r.shipment_id, r.message, r.created_at, u.full_name as cha_name
+       FROM shipment_reviews r
+       JOIN users u ON u.id = r.created_by
+       ORDER BY r.created_at DESC`
+    );
+    return res.status(200).json({ reviews: rows });
+  } catch (err) {
+    console.error('[ADMIN] getShipmentReviews error:', err);
+    return res.status(500).json({ error: 'Internal server error.' });
+  }
+};
+
+module.exports = { getAllComplaints, getAuditLogs, flagUser, getAllUsers, getAdminSummary, getComplaintDecrypted, createShipment, getShipmentReviews };

@@ -72,12 +72,12 @@ export const GovtDocuments = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brown-800">Assigned Documents</h1>
-          <p className="text-brown-500 mt-1">All documents assigned to you for review and clearance.</p>
+          <h1 className="text-2xl font-bold text-blue-800">Assigned Documents</h1>
+          <p className="text-blue-500 mt-1">All documents assigned to you for review and clearance.</p>
         </div>
         <button
           onClick={fetchDocuments}
-          className="p-2 rounded-lg hover:bg-brown-50 text-brown-400 hover:text-brown-700 transition-colors"
+          className="p-2 rounded-lg hover:bg-blue-50 text-blue-400 hover:text-blue-700 transition-colors"
           title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -107,11 +107,11 @@ export const GovtDocuments = () => {
           <tbody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-brown-400 py-8">Loading…</TableCell>
+                <TableCell colSpan={7} className="text-center text-blue-400 py-8">Loading…</TableCell>
               </TableRow>
             ) : documents.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-brown-400 py-8">No documents assigned to you.</TableCell>
+                <TableCell colSpan={7} className="text-center text-blue-400 py-8">No documents assigned to you.</TableCell>
               </TableRow>
             ) : (
               documents.map((doc) => (
@@ -120,7 +120,7 @@ export const GovtDocuments = () => {
                   <TableCell className="font-mono text-sm">{doc.shipment_id?.slice(0, 8)}…</TableCell>
                   <TableCell>{doc.uploaded_by_name || doc.uploaded_by?.slice(0, 8)}</TableCell>
                   <TableCell>{doc.document_type}</TableCell>
-                  <TableCell className="text-brown-500 text-sm">
+                  <TableCell className="text-blue-500 text-sm">
                     {new Date(doc.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>

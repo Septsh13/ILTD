@@ -29,7 +29,7 @@ router.get('/stats', getComplaintStats);
 
 // ── GET /cbi/complaints — List all complaints (no identity)
 router.get(
-  '/',
+  '/complaints',
   [
     query('page').optional().isInt({ min: 1 }).withMessage('page must be a positive integer.'),
     query('limit').optional().isInt({ min: 1, max: 100 }),
@@ -44,7 +44,7 @@ router.get(
 
 // ── GET /cbi/complaints/:id — Get one complaint (no identity)
 router.get(
-  '/:id',
+  '/complaints/:id',
   [
     param('id').isUUID().withMessage('id must be a valid complaint UUID.'),
   ],
@@ -54,7 +54,7 @@ router.get(
 
 // ── PUT /cbi/complaints/:id — Update status & CBI message
 router.put(
-  '/:id',
+  '/complaints/:id',
   [
     param('id').isUUID().withMessage('id must be a valid complaint UUID.'),
     body('status').optional().isIn(['OPEN', 'UNDER_REVIEW', 'RESOLVED', 'CLOSED'])

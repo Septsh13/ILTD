@@ -21,12 +21,16 @@ async function setup() {
   try {
     console.log('🔌 Connected to PostgreSQL...\n');
 
+    // ── Clean slate ────────────────────────────────────────────
+    await client.query(`DROP TABLE IF EXISTS audit_logs, complaint_identity, complaints, shipment_reviews, interactions, document_actions, documents, shipments, govt_officials, cha_agents, users CASCADE`);
+    await client.query(`DROP TYPE IF EXISTS user_role, shipment_status, document_status, complaint_status, rejection_reason CASCADE`);
+
     // ── Enable UUID extension ────────────────────────────────────────────
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
     // ── ENUM TYPES ───────────────────────────────────────────────────────
     await client.query(`DO $$ BEGIN
-      CREATE TYPE user_role AS ENUM ('CHA_AGENT', 'GOVT_OFFICIAL', 'ADMIN');
+      CREATE TYPE user_role AS ENUM ('CHA_AGENT', 'GOVT_OFFICIAL', 'CBI', 'ADMIN');
     EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
 
     await client.query(`DO $$ BEGIN
@@ -90,59 +94,27 @@ async function setup() {
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS shipments (
-        id               UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
-        cha_user_id      UUID            NOT NULL REFERENCES users(id),
-        tracking_number  VARCHAR(100)    NOT NULL UNIQUE,
-        shipper_name     VARCHAR(200)    NOT NULL,
-        consignee_name   VARCHAR(200)    NOT NULL,
-        origin_port      VARCHAR(100)    NOT NULL,
-        destination_port VARCHAR(100)    NOT NULL,
-        cargo_description TEXT,
-        gross_weight_kg  NUMERIC(12, 3),
+        id               VARCHAR(50)     PRIMARY KEY,
+        title            VARCHAR(255)    NOT NULL,
+        description      TEXT            NOT NULL,
+        created_by       UUID            NOT NULL REFERENCES users(id),
         status           shipment_status NOT NULL DEFAULT 'PENDING',
-        is_suspicious    BOOLEAN         NOT NULL DEFAULT FALSE,
-        suspicious_note  TEXT,
+        approved_by      UUID            REFERENCES users(id),
+        decision         VARCHAR(50),
+        remarks          TEXT,
+        is_cha_accepted  BOOLEAN         NOT NULL DEFAULT FALSE,
         created_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
         updated_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS documents (
-        id              UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
-        shipment_id     UUID            NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
-        uploaded_by     UUID            NOT NULL REFERENCES users(id),
-        document_type   VARCHAR(100)    NOT NULL,
-        file_name       VARCHAR(255)    NOT NULL,
-        file_url        TEXT            NOT NULL,
-        status          document_status NOT NULL DEFAULT 'PENDING',
-        assigned_to     UUID            REFERENCES users(id),
-        created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-        updated_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS document_actions (
-        id               UUID             PRIMARY KEY DEFAULT uuid_generate_v4(),
-        document_id      UUID             NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-        acted_by         UUID             NOT NULL REFERENCES users(id),
-        action           document_status  NOT NULL,
-        rejection_reason rejection_reason,
-        notes            TEXT,
-        created_at       TIMESTAMPTZ      NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS interactions (
-        id              UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
-        cha_user_id     UUID         NOT NULL REFERENCES users(id),
-        govt_user_id    UUID         NOT NULL REFERENCES users(id),
-        shipment_id     UUID         REFERENCES shipments(id),
-        subject         VARCHAR(255) NOT NULL,
-        message         TEXT         NOT NULL,
-        created_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS shipment_reviews (
+        id               UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
+        shipment_id      VARCHAR(50)     NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
+        message          TEXT            NOT NULL,
+        created_by       UUID            NOT NULL REFERENCES users(id),
+        created_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
       )
     `);
 
@@ -150,10 +122,13 @@ async function setup() {
       CREATE TABLE IF NOT EXISTS complaints (
         id              UUID             PRIMARY KEY DEFAULT uuid_generate_v4(),
         tracking_token  VARCHAR(64)      NOT NULL UNIQUE,
+        shipment_id     VARCHAR(50)      REFERENCES shipments(id) ON DELETE SET NULL,
         subject         VARCHAR(255)     NOT NULL,
         description     TEXT             NOT NULL,
         related_user_id UUID             REFERENCES users(id),
         status          complaint_status NOT NULL DEFAULT 'OPEN',
+        cbi_assigned_to UUID             REFERENCES users(id),
+        cbi_message     TEXT,
         admin_notes     TEXT,
         created_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
         updated_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW()
@@ -167,7 +142,7 @@ async function setup() {
         encrypted_name  TEXT        NOT NULL,
         encrypted_email TEXT        NOT NULL,
         encrypted_phone TEXT,
-        iv              VARCHAR(64) NOT NULL,
+        iv              TEXT        NOT NULL,
         created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
@@ -200,6 +175,7 @@ async function setup() {
       { employee_id: 'CHA002',   full_name: 'Ravi Kumar',            email: 'cha002@clearpath.gov',  role: 'CHA_AGENT',    hash: testHash  },
       { employee_id: 'GOVT001',  full_name: 'Priya Sharma',          email: 'govt001@clearpath.gov', role: 'GOVT_OFFICIAL', hash: testHash },
       { employee_id: 'GOVT002',  full_name: 'Sneha Iyer',            email: 'govt002@clearpath.gov', role: 'GOVT_OFFICIAL', hash: testHash },
+      { employee_id: 'CBI001',   full_name: 'Vikram Singh',          email: 'cbi001@clearpath.gov',  role: 'CBI',          hash: testHash },
     ];
 
     for (const u of users) {

@@ -1,5 +1,5 @@
 /**
- * ClearPath — Entry Point
+ * ClearPath — Entry Point (Restart trigger)
  * Express server with all routes mounted
  */
 
@@ -67,11 +67,12 @@ app.use((err, req, res, next) => {
 // ── Start Server ─────────────────────────────────────────────────────────────
 const start = async () => {
   await testConnection();
-  app.listen(PORT, () => {
-    console.log(`\n🚀 ClearPath API running on http://localhost:${PORT}`);
+  app.listen(PORT, '127.0.0.1', () => {
+    console.log(`\n🚀 ClearPath API running on http://127.0.0.1:${PORT}`);
     console.log(`   Environment : ${process.env.NODE_ENV}`);
-    console.log(`   Health check: http://localhost:${PORT}/health\n`);
+    console.log(`   Health check: http://127.0.0.1:${PORT}/health\n`);
   });
 };
 
 start();
+//

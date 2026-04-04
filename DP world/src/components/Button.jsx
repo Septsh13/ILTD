@@ -3,10 +3,10 @@ import { cn } from '../utils/cn';
 
 export const Button = React.forwardRef(({ className, variant = 'primary', size = 'default', children, ...props }, ref) => {
   const variants = {
-    primary: 'bg-brown-600 text-white hover:bg-brown-700 shadow-sm active:bg-brown-800',
-    secondary: 'bg-beige-200 text-brown-800 hover:bg-beige-300 border border-brown-200 shadow-sm',
-    outline: 'border-2 border-brown-600 text-brown-600 hover:bg-brown-50',
-    ghost: 'text-brown-600 hover:bg-beige-100',
+    primary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-sm active:bg-blue-800',
+    secondary: 'bg-slate-200 text-blue-800 hover:bg-slate-300 border border-blue-200 shadow-sm',
+    outline: 'border-2 border-blue-600 text-blue-600 hover:bg-blue-50',
+    ghost: 'text-blue-600 hover:bg-slate-100',
     danger: 'bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 hover:text-red-700',
   };
 
@@ -21,7 +21,7 @@ export const Button = React.forwardRef(({ className, variant = 'primary', size =
     <button
       ref={ref}
       className={cn(
-        'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brown-500 disabled:pointer-events-none disabled:opacity-50 ring-offset-white',
+        'inline-flex items-center justify-center rounded-xl font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:pointer-events-none disabled:opacity-50 ring-offset-white',
         variants[variant],
         sizes[size],
         className

@@ -22,6 +22,7 @@ import { ComplaintDetail } from './pages/cbi/ComplaintDetail';
 
 // Admin Portal
 import { AdminDashboard } from './pages/admin/Dashboard';
+import { AdminReviews } from './pages/admin/Reviews';
 import { AdminComplaints } from './pages/admin/Complaints';
 import { AdminAuditLogs } from './pages/admin/AuditLogs';
 import { AdminUsers } from './pages/admin/Users';
@@ -63,6 +64,7 @@ function App() {
           {/* Admin Portal */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']}><DashboardLayout role="ADMIN" /></ProtectedRoute>}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/reviews" element={<AdminReviews />} />
             <Route path="/admin/complaints" element={<AdminComplaints />} />
             <Route path="/admin/logs" element={<AdminAuditLogs />} />
             <Route path="/admin/users" element={<AdminUsers />} />
