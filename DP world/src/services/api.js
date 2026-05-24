@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '',  // Use Vite proxy (empty baseURL means same origin)
+  baseURL: import.meta.env.VITE_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -24,6 +24,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('role');
       localStorage.removeItem('employee_id');
+      localStorage.removeItem('full_name');
       window.location.href = '/';
     }
     return Promise.reject(error);

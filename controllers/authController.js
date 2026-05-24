@@ -18,7 +18,9 @@ const login = async (req, res) => {
 
   try {
     const { rows } = await pool.query(
-      'SELECT id, employee_id, full_name, password_hash, role, is_active, is_flagged FROM users WHERE employee_id = $1',
+      `SELECT id, employee_id, full_name, password_hash, role, is_active, is_flagged
+       FROM users
+       WHERE UPPER(employee_id) = UPPER($1)`,
       [employee_id]
     );
 
@@ -73,7 +75,9 @@ const verifyOtpHandler = async (req, res) => {
 
     // Fetch user details for token payload
     const { rows } = await pool.query(
-      'SELECT id, employee_id, full_name, role FROM users WHERE employee_id = $1',
+      `SELECT id, employee_id, full_name, role, chapter_id, president_id
+       FROM users
+       WHERE UPPER(employee_id) = UPPER($1)`,
       [employee_id]
     );
 
@@ -96,6 +100,8 @@ const verifyOtpHandler = async (req, res) => {
         employee_id: user.employee_id,
         full_name:   user.full_name,
         role:        user.role,
+        chapter_id:  user.chapter_id,
+        president_id: user.president_id,
       },
     });
   } catch (err) {
@@ -107,13 +113,14 @@ const verifyOtpHandler = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT 
-        u.id, u.employee_id, u.full_name, u.email, u.role,
-        c.license_number, c.agency_name, c.contact_phone,
-        g.department, g.designation, g.office_code
+      SELECT
+        u.id, u.employee_id, u.full_name, u.email, u.role, u.member_category,
+        u.region, u.chapter_id, u.president_id, u.total_referrals, u.business_generated_inr,
+        c.name AS chapter_name, c.city AS chapter_city,
+        p.full_name AS president_name
       FROM users u
-      LEFT JOIN cha_agents c ON c.user_id = u.id
-      LEFT JOIN govt_officials g ON g.user_id = u.id
+      LEFT JOIN chapters c ON c.id = u.chapter_id
+      LEFT JOIN users p ON p.id = u.president_id
       WHERE u.id = $1
     `, [req.user.id]);
     
@@ -127,7 +134,7 @@ const getMe = async (req, res) => {
 };
 
 const updateMe = async (req, res) => {
-  const { full_name, email, contact_phone, agency_name, designation, department } = req.body;
+  const { full_name, email, member_category, region } = req.body;
   const client = await pool.connect();
   
   try {
@@ -135,22 +142,15 @@ const updateMe = async (req, res) => {
     
     // Update core user details
     await client.query(
-      `UPDATE users SET full_name = COALESCE($1, full_name), email = COALESCE($2, email), updated_at = NOW() WHERE id = $3`,
-      [full_name, email, req.user.id]
+      `UPDATE users
+       SET full_name = COALESCE($1, full_name),
+           email = COALESCE($2, email),
+           member_category = COALESCE($3, member_category),
+           region = COALESCE($4, region),
+           updated_at = NOW()
+       WHERE id = $5`,
+      [full_name, email, member_category, region, req.user.id]
     );
-
-    // Update role specific details if they exist
-    if (req.user.role === 'CHA_AGENT') {
-      await client.query(
-        `UPDATE cha_agents SET contact_phone = COALESCE($1, contact_phone), agency_name = COALESCE($2, agency_name) WHERE user_id = $3`,
-        [contact_phone, agency_name, req.user.id]
-      );
-    } else if (req.user.role === 'GOVT_OFFICIAL') {
-      await client.query(
-        `UPDATE govt_officials SET designation = COALESCE($1, designation), department = COALESCE($2, department) WHERE user_id = $3`,
-        [designation, department, req.user.id]
-      );
-    }
     
     await client.query('COMMIT');
     return res.status(200).json({ message: 'Profile updated successfully.' });

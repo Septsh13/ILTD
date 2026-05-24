@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../GSN"
+		},
+		{
+			"name": "clear path",
+			"path": "."
+		}
+	],
+	"settings": {}
+}
