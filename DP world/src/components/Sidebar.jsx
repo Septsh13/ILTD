@@ -1,103 +1,103 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import {
-  BarChart3,
-  CalendarDays,
-  Home,
-  LogOut,
+import { 
+  LayoutDashboard, 
+  Package, 
+  UploadCloud, 
+  History, 
+  FileCheck, 
+  BarChart3, 
+  AlertCircle, 
   Settings,
-  Trophy,
   Users,
+  MessageCircle,
+  MessageSquare,
+  LogOut,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import growGloballyImage from '../assets/grow-globally.webp';
 
-const menus = {
+const roleMenus = {
+  CHA_AGENT: [
+    { name: 'Dashboard', path: '/cha/dashboard', icon: LayoutDashboard },
+    { name: 'Shipments', path: '/cha/shipments', icon: Package },
+    { name: 'File Complaint', path: '/complaint', icon: AlertCircle },
+  ],
+  GOVT_OFFICIAL: [
+    { name: 'Review Panel', path: '/govt/dashboard', icon: LayoutDashboard },
+  ],
+  CBI: [
+    { name: 'Investigation Dashboard', path: '/cbi', icon: LayoutDashboard },
+    { name: 'Active Cases', path: '/cbi', icon: AlertCircle },
+  ],
   ADMIN: [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: Home },
-    { name: 'Global Leaderboard', path: '/admin/dashboard#leaderboard', icon: Trophy },
-    { name: 'Chapter Leaderboard', path: '/admin/dashboard#chapter-leaderboard', icon: BarChart3 },
-    { name: 'Total Members', path: '/admin/dashboard#members', icon: Users },
-    { name: 'Meetings', path: '/admin/dashboard#meetings', icon: CalendarDays },
-    { name: 'Settings', path: '/admin/dashboard#settings', icon: Settings },
+    { name: 'Analytics', path: '/admin/dashboard', icon: BarChart3 },
+    { name: 'Shipment Reviews', path: '/admin/reviews', icon: MessageSquare },
+    { name: 'Complaints Management', path: '/admin/complaints', icon: AlertCircle },
+    { name: 'Audit Logs', path: '/admin/logs', icon: History },
+    { name: 'User Management', path: '/admin/users', icon: Users },
   ],
-  CHAPTER_PRESIDENT: [
-    { name: 'Dashboard', path: '/president/dashboard', icon: Home },
-    { name: 'My Chapter Members', path: '/president/dashboard#members', icon: Users },
-    { name: 'Chapter Leaderboard', path: '/president/dashboard#leaderboard', icon: Trophy },
-    { name: 'Meetings', path: '/president/dashboard#meetings', icon: CalendarDays },
-    { name: 'Settings', path: '/president/dashboard#settings', icon: Settings },
-  ],
-  NORMAL_USER: [
-    { name: 'Dashboard', path: '/user/dashboard', icon: Home },
-    { name: 'My Chapter', path: '/user/dashboard#members', icon: Users },
-    { name: 'Meetings', path: '/user/dashboard#meetings', icon: CalendarDays },
-    { name: 'Leaderboard', path: '/user/dashboard#leaderboard', icon: Trophy },
-    { name: 'Settings', path: '/user/dashboard#settings', icon: Settings },
+  COMPLAINANT: [
+    { name: 'My Complaints', path: '/complaint/status', icon: LayoutDashboard },
+    { name: 'File Complaint', path: '/complaint/new', icon: AlertCircle },
   ],
 };
 
-export const Sidebar = ({ role, isOpen, isCollapsed, onClose }) => {
+export const Sidebar = ({ role }) => {
   const { logout } = useAuth();
-  const items = menus[role] || [];
+  const menuItems = roleMenus[role] || [];
 
   return (
-    <>
-      <aside className={`sticky top-0 z-40 hidden h-screen flex-col bg-[#071b36] text-white shadow-2xl transition-all duration-300 lg:flex ${isCollapsed ? 'w-[88px]' : 'w-72'}`}>
-        <div className={`flex items-start px-5 py-6 ${isCollapsed ? 'lg:justify-center' : 'justify-between'}`}>
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="grid h-11 w-11 place-items-center rounded-2xl border border-white/20 bg-white/10 text-lg font-black">
-                GSN
-              </div>
-              <div className={isCollapsed ? 'lg:hidden' : ''}>
-                <h1 className="text-2xl font-semibold leading-none">GSN</h1>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60">
-                  Global Success Network
-                </p>
-              </div>
-            </div>
+    <aside className="w-64 min-h-screen bg-white border-r border-blue-200 flex flex-col shadow-sm">
+      <div className="p-6 border-b border-blue-200">
+        <h1 className="text-2xl font-bold text-blue-600 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg border-2 border-blue-500 flex items-center justify-center text-blue-500 font-extrabold text-sm">
+            CP
           </div>
-        </div>
+          ClearPath
+        </h1>
+        <p className="text-xs text-blue-800 font-medium uppercase tracking-wider mt-2 opacity-70">
+          Logistics Transparency
+        </p>
+      </div>
 
-        <nav className="flex-1 space-y-2 px-4">
-          {items.map((item) => (
-            <NavLink
-              key={item.name}
-              to={item.path}
-              onClick={onClose}
-              title={item.name}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${isCollapsed ? 'lg:justify-center lg:px-3' : ''} ${
-                  isActive || window.location.hash === new URL(item.path, window.location.origin).hash
-                    ? 'bg-[#5948f5] text-white shadow-[0_14px_30px_rgba(89,72,245,0.25)]'
-                    : 'text-white/78 hover:bg-white/10 hover:text-white'
-                }`
-              }
-            >
-              <item.icon size={18} />
-              <span className={isCollapsed ? 'lg:hidden' : ''}>{item.name}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className={`m-4 rounded-2xl bg-[#2a277a] p-4 ${isCollapsed ? 'lg:hidden' : ''}`}>
-          <p className="text-sm font-semibold">Grow Globally</p>
-          <p className="mt-1 text-xs leading-5 text-white/70">Connect. Collaborate. Succeed.</p>
-          <img
-            src={growGloballyImage}
-            alt=""
-            className="mt-4 h-24 w-full rounded-xl object-cover object-center shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
-          />
-        </div>
-
-        <div className="border-t border-white/10 p-4">
-          <button onClick={logout} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm text-red-200 hover:bg-red-500/10 ${isCollapsed ? 'lg:justify-center lg:px-3' : ''}`}>
-            <LogOut size={16} />
-            <span className={isCollapsed ? 'lg:hidden' : ''}>Logout</span>
+      <nav className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium ${
+                isActive
+                  ? 'bg-blue-50 text-blue-600 shadow-sm border border-blue-100'
+                  : 'text-blue-800 hover:bg-slate-100 hover:text-blue-600'
+              }`
+            }
+          >
+            <item.icon className="w-5 h-5" />
+            {item.name}
+          </NavLink>
+        ))}
+      </nav>
+      
+      <div className="p-4 border-t border-blue-200 bg-slate-50 mt-auto">
+        <div className="flex flex-col gap-1">
+          <button 
+            onClick={() => alert('Password change UI to be implemented by administrator.')} 
+            className="flex items-center gap-3 px-4 py-2 text-sm text-blue-700 hover:bg-slate-200 rounded-lg transition text-left"
+          >
+            <Lock className="w-4 h-4 opacity-70" />
+            Change Password
+          </button>
+          <button 
+            onClick={logout} 
+            className="flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition text-left"
+          >
+            <LogOut className="w-4 h-4 opacity-70" />
+            Sign Out
           </button>
         </div>
-      </aside>
-    </>
+      </div>
+    </aside>
   );
 };

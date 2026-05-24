@@ -1,53 +1,66 @@
 import React from 'react';
-import { Bell, Menu, MessageSquare, Search, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { Bell, User, LogOut, Search } from 'lucide-react';
+import { ProfileModal } from './ProfileModal';
 
-const roleLabel = {
-  ADMIN: 'Global Admin',
-  CHAPTER_PRESIDENT: 'Chapter President',
-  NORMAL_USER: 'Member',
-};
-
-export const Navbar = ({ onMenu, onCollapse }) => {
-  const { user } = useAuth();
+export const Navbar = () => {
+  const { user, logout } = useAuth();
+  const [isProfileOpen, setIsProfileOpen] = React.useState(false);
+  
+  const roleDisplay = user?.role?.replace('_', ' ') || 'USER';
 
   return (
-    <header className="sticky top-0 z-20 hidden border-b border-black/5 bg-[#fffdf8]/85 px-4 py-3 backdrop-blur sm:block sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-7xl items-center gap-4">
-        <button className="rounded-xl border border-black/10 bg-white p-2 lg:hidden" onClick={onMenu} aria-label="Toggle sidebar">
-          <Menu size={20} />
-        </button>
-        <button className="hidden rounded-xl border border-black/10 bg-white p-2 lg:block" onClick={onCollapse} aria-label="Collapse sidebar">
-          <Menu size={20} />
-        </button>
-
-        <div className="relative hidden min-w-0 flex-1 sm:block">
-          <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-          <input
-            className="h-11 w-full max-w-2xl rounded-xl border border-black/10 bg-white pl-11 pr-4 text-sm outline-none transition focus:border-black/40"
-            placeholder="Search members, chapters, referrals..."
+    <header className="h-20 bg-white border-b border-blue-200 shadow-sm px-8 flex items-center justify-between sticky top-0 z-10">
+      
+      <div className="flex items-center max-w-md w-full">
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+          <input 
+            type="text" 
+            placeholder="Search documents, shipments, IDs..." 
+            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-blue-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all text-blue-800 placeholder:text-blue-400"
           />
         </div>
+      </div>
 
-        <div className="ml-auto flex items-center gap-3">
-          <button className="rounded-xl border border-black/10 bg-white p-2 text-zinc-600 hover:text-black">
-            <MessageSquare size={18} />
-          </button>
-          <button className="relative rounded-xl border border-black/10 bg-white p-2 text-zinc-600 hover:text-black">
-            <Bell size={18} />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" />
-          </button>
-          <div className="hidden items-center gap-3 rounded-xl border border-black/10 bg-white px-3 py-2 sm:flex">
-            <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f3efff] text-[#4f35b8]">
-              <User size={18} />
-            </div>
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold">{user?.name || user?.employeeId || 'GSN User'}</p>
-              <p className="text-xs text-zinc-500">{roleLabel[user?.role] || 'User'}</p>
-            </div>
+      <div className="flex items-center gap-6">
+        <button className="relative p-2 text-blue-600 hover:bg-slate-100 rounded-full transition-colors">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
+        
+        <div className="w-px h-8 bg-blue-200"></div>
+
+        <div className="flex items-center gap-4 group">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-blue-800">Govt ID: 192837</p>
+            <p className="text-xs text-blue-500 uppercase tracking-wide">{roleDisplay}</p>
           </div>
+          
+          <button 
+            onClick={() => setIsProfileOpen(true)}
+            className="w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 border-2 border-blue-200 hover:border-blue-300 flex items-center justify-center text-blue-600 overflow-hidden transition"
+            title="Edit Profile"
+          >
+            <User className="w-5 h-5" />
+          </button>
+
+          <button 
+            onClick={logout}
+            className="p-2 text-blue-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors hidden sm:block"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5" />
+          </button>
         </div>
       </div>
+
+      {isProfileOpen && (
+        <ProfileModal 
+          userRole={user?.role} 
+          onClose={() => setIsProfileOpen(false)} 
+        />
+      )}
     </header>
   );
 };

@@ -1,9 +1,0 @@
-.env
-*.log
-node_modules/
-dist/
-dist-ssr/
-*.local
-vite.config.js.timestamp-*
-
-!.env.example

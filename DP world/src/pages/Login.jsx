@@ -1,277 +1,192 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LoginInputField } from '../components/LoginInputField';
-import { LoginLoader } from '../components/LoginLoader';
-import { LoginRoleSelect } from '../components/LoginRoleSelect';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BadgeCheck,
-  BriefcaseBusiness,
-  KeyRound,
-  Network,
-  ShieldCheck,
-  UsersRound,
-} from 'lucide-react';
-
-const featureItems = [
-  { icon: ShieldCheck, text: 'Secure member access' },
-  { icon: UsersRound, text: 'Two-account access model' },
-  { icon: BadgeCheck, text: 'Professional workspace' },
-];
+import { Card, CardContent, CardHeader, CardTitle } from '../components/Card';
+import { Button } from '../components/Button';
+import { Lock, User, KeyRound, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export const Login = () => {
   const { requestOtp, verifyOtp } = useAuth();
-  const [form, setForm] = useState({
-    role: 'USER',
-    username: '',
-    password: '',
-    remember: true,
-  });
-  const [touched, setTouched] = useState({});
+
+  // Step 1 state
+  const [employeeId, setEmployeeId] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [step, setStep] = useState(1);
+
+  // Step 2 state
+  const [step, setStep] = useState(1); // 1 = credentials, 2 = OTP
   const [otp, setOtp] = useState('');
-  const [otpHint, setOtpHint] = useState('');
-  const [authEmployeeId, setAuthEmployeeId] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [otpHint, setOtpHint] = useState(''); // mock: shows OTP returned by backend
 
-  const errors = useMemo(() => ({
-    username:
-      form.username.trim().length === 0
-        ? 'Username is required.'
-        : form.username.trim().length < 3
-          ? 'Use at least 3 characters.'
-          : '',
-    password:
-      form.password.length === 0
-        ? 'Password is required.'
-        : form.password.length < 6
-          ? 'Password must be at least 6 characters.'
-          : '',
-    otp:
-      otp.length === 0
-        ? 'Verification code is required.'
-        : otp.length < 6
-          ? 'Enter the 6-digit code.'
-          : '',
-  }), [form.password, form.username, otp]);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const updateField = (field) => (event) => {
-    const value = field === 'remember' ? event.target.checked : event.target.value;
-    setForm((current) => ({ ...current, [field]: value }));
-    setErrorMessage('');
-  };
+  const handleStep1 = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
 
-  const markTouched = (field) => {
-    setTouched((current) => ({ ...current, [field]: true }));
-  };
-
-  const handleCredentials = async (event) => {
-    event.preventDefault();
-    setTouched({ username: true, password: true });
-
-    if (errors.username || errors.password) return;
-
-    setLoading(true);
-    setErrorMessage('');
-
-    const result = await requestOtp(form.username.trim(), form.password);
+    const result = await requestOtp(employeeId, password);
 
     if (result.success) {
+      // In dev mode: backend returns OTP in body — pre-fill for convenience
       if (result.otp) setOtpHint(result.otp);
-      setAuthEmployeeId(result.employeeId || form.username.trim());
       setStep(2);
     } else {
-      setErrorMessage(result.message);
+      setError(result.message);
     }
-
-    setLoading(false);
+    setIsLoading(false);
   };
 
-  const handleVerification = async (event) => {
-    event.preventDefault();
-    setTouched((current) => ({ ...current, otp: true }));
+  const handleStep2 = async (e) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
 
-    if (errors.otp) return;
-
-    setLoading(true);
-    setErrorMessage('');
-
-    const result = await verifyOtp(authEmployeeId || form.username.trim(), otp, form.role);
+    const result = await verifyOtp(employeeId, otp);
 
     if (!result.success) {
-      setErrorMessage(result.message);
+      setError(result.message);
     }
-
-    setLoading(false);
-  };
-
-  const resetToCredentials = () => {
-    setStep(1);
-    setOtp('');
-    setErrorMessage('');
-    setTouched((current) => ({ ...current, otp: false }));
+    setIsLoading(false);
   };
 
   return (
-    <main className="relative grid min-h-screen overflow-hidden bg-[#f7f4ec] px-5 py-6 text-black sm:px-8 lg:px-12">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,255,255,0.95),transparent_34%),linear-gradient(rgba(45,40,32,0.055)_1px,transparent_1px),linear-gradient(90deg,rgba(45,40,32,0.045)_1px,transparent_1px)] bg-[size:100%_100%,54px_54px,54px_54px]" />
-      <div className="absolute inset-x-0 top-0 h-px bg-black/15" />
-      <div className="absolute bottom-0 left-0 right-0 h-52 bg-[linear-gradient(to_top,#fffdf8,rgba(255,253,248,0))]" />
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative background */}
+      <div className="absolute top-0 left-0 w-full h-96 bg-blue-600/5 -skew-y-6 transform origin-top-left -z-10"></div>
 
-      <section className="relative z-10 m-auto grid w-full max-w-6xl items-center gap-8 py-8 lg:grid-cols-[minmax(0,1fr)_460px] lg:gap-16">
-        <div className="max-w-xl">
-          <div className="mb-7 inline-flex items-center gap-3 rounded-full border border-black/10 bg-[#fffdf8]/90 px-4 py-2 text-sm font-medium text-zinc-700 shadow-[0_18px_48px_rgba(62,52,38,0.12)] backdrop-blur">
-            <Network size={18} className="text-black" />
-            Global Success Network
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white border border-blue-200 shadow-sm mb-4">
+            <span className="text-2xl font-extrabold text-blue-600">CP</span>
           </div>
-
-          <h1 className="text-6xl font-semibold leading-[0.96] tracking-normal text-black sm:text-7xl">
-            GSN
-          </h1>
-          <p className="mt-5 text-2xl font-medium text-zinc-800">
-            Connect. Collaborate. Grow.
-          </p>
-          <p className="mt-5 max-w-lg text-base leading-7 text-zinc-600">
-            A focused member gateway for trusted teams, with access reduced to two clean roles: admin and user.
-          </p>
-
-          <div className="mt-8 grid gap-4 text-sm text-zinc-700 sm:grid-cols-3 lg:grid-cols-1">
-            {featureItems.map(({ icon: Icon, text }) => (
-              <div key={text} className="flex items-center gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-black/10 bg-[#fffdf8] text-black shadow-sm">
-                  <Icon size={18} />
-                </span>
-                {text}
-              </div>
-            ))}
-          </div>
+          <h1 className="text-3xl font-bold text-blue-800">ClearPath</h1>
+          <p className="text-blue-600 mt-2">Logistics Transparency Platform</p>
         </div>
 
-        <form
-          onSubmit={step === 1 ? handleCredentials : handleVerification}
-          className="glass-panel w-full rounded-[2rem] p-6 sm:p-8"
-        >
-          <div className="mb-8 text-center lg:text-left">
-            <div className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-black text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)] lg:mx-0">
-              <BriefcaseBusiness size={24} />
-            </div>
-            <h2 className="text-3xl font-semibold tracking-normal">
-              {step === 1 ? 'Welcome back' : 'Verify access'}
-            </h2>
-            <p className="mt-2 text-sm text-zinc-600">
-              {step === 1 ? 'Sign in to your GSN workspace.' : 'Enter the secure code to continue.'}
+        <Card className="shadow-lg border-blue-200 backdrop-blur-sm bg-white/90">
+          <CardHeader className="bg-transparent border-b-0 pt-8 pb-0 text-center">
+            <CardTitle className="text-2xl font-bold">
+              {step === 1 ? 'Sign In' : 'Verify OTP'}
+            </CardTitle>
+            <p className="text-sm text-blue-500 mt-1">
+              {step === 1
+                ? 'Enter your Employee ID and password'
+                : `OTP sent for ${employeeId}`}
             </p>
-          </div>
 
-          <div className="space-y-5">
+            {/* Step indicator */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 1 ? 'bg-blue-600' : 'bg-blue-200'}`} />
+              <div className={`w-8 h-1.5 rounded-full transition-colors ${step >= 2 ? 'bg-blue-600' : 'bg-blue-200'}`} />
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-8">
+            {error && (
+              <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm font-medium flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-600"></span>
+                {error}
+              </div>
+            )}
+
             {step === 1 ? (
-              <>
-                <LoginInputField
-                  id="username"
-                  label="Username"
-                  value={form.username}
-                  error={touched.username ? errors.username : ''}
-                  onChange={updateField('username')}
-                  onBlur={() => markTouched('username')}
-                  autoComplete="username"
-                />
-
-                <LoginInputField
-                  id="password"
-                  label="Password"
-                  value={form.password}
-                  error={touched.password ? errors.password : ''}
-                  onChange={updateField('password')}
-                  onBlur={() => markTouched('password')}
-                  autoComplete="current-password"
-                  showToggle
-                  isVisible={showPassword}
-                  onToggle={() => setShowPassword((current) => !current)}
-                />
-
-                <LoginRoleSelect
-                  value={form.role}
-                  onChange={updateField('role')}
-                />
-
-                <div className="flex items-center justify-between gap-4 text-sm">
-                  <label className="flex cursor-pointer items-center gap-3 text-zinc-700">
+              <form onSubmit={handleStep1} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-blue-700">Employee ID</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
                     <input
-                      type="checkbox"
-                      checked={form.remember}
-                      onChange={updateField('remember')}
-                      className="h-4 w-4 rounded border-black/20 bg-white text-black accent-black"
+                      type="text"
+                      value={employeeId}
+                      onChange={(e) => setEmployeeId(e.target.value.toUpperCase())}
+                      placeholder="e.g. ADMIN001, CHA001, GOVT001"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300"
+                      required
                     />
-                    Remember me
-                  </label>
-                  <span className="inline-flex items-center gap-2 text-zinc-500">
-                    <KeyRound size={14} />
-                    Secure access
-                  </span>
+                  </div>
                 </div>
-              </>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-blue-700">Password</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      className="w-full pl-10 pr-10 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full h-12 text-base" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      Continue <ArrowRight className="w-4 h-4" />
+                    </span>
+                  )}
+                </Button>
+              </form>
             ) : (
-              <>
+              <form onSubmit={handleStep2} className="space-y-6">
                 {otpHint && (
-                  <div className="rounded-xl border border-amber-500/25 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
-                    Dev Mode OTP: {otpHint}
+                  <div className="p-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl text-sm">
+                    <span className="font-semibold">Dev Mode OTP: </span>{otpHint}
                   </div>
                 )}
 
-                <LoginInputField
-                  id="otp"
-                  label="Verification code"
-                  value={otp}
-                  error={touched.otp ? errors.otp : ''}
-                  onChange={(event) => {
-                    setOtp(event.target.value.replace(/\D/g, '').slice(0, 6));
-                    setErrorMessage('');
-                  }}
-                  onBlur={() => markTouched('otp')}
-                  autoComplete="one-time-code"
-                  inputMode="numeric"
-                  maxLength={6}
-                />
-              </>
-            )}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-blue-700">One-Time Password</label>
+                  <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-400" />
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6-digit OTP"
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow placeholder:text-blue-300 tracking-widest text-center text-lg font-mono"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+                </div>
 
-            {errorMessage && (
-              <div className="rounded-xl border border-red-500/25 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-                {errorMessage}
-              </div>
-            )}
+                <Button type="submit" className="w-full h-12 text-base" disabled={isLoading}>
+                  {isLoading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    'Verify & Login'
+                  )}
+                </Button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="group flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-black text-sm font-bold text-white shadow-[0_26px_80px_rgba(62,52,38,0.22)] transition duration-200 hover:-translate-y-0.5 hover:bg-zinc-800 hover:shadow-[0_16px_36px_rgba(0,0,0,0.18)] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
-            >
-              {loading ? (
-                <LoginLoader />
-              ) : (
-                <>
-                  {step === 1 ? 'Login to GSN' : 'Verify and enter'}
-                  <ArrowRight size={18} className="transition group-hover:translate-x-1" />
-                </>
-              )}
-            </button>
-
-            {step === 2 && (
-              <button
-                type="button"
-                onClick={resetToCredentials}
-                className="inline-flex w-full items-center justify-center gap-2 text-sm font-semibold text-zinc-600 transition hover:text-black"
-              >
-                <ArrowLeft size={16} />
-                Back to credentials
-              </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep(1); setError(''); setOtp(''); }}
+                  className="w-full text-center text-sm text-blue-400 hover:text-blue-600 transition-colors"
+                >
+                  ← Back to credentials
+                </button>
+              </form>
             )}
-          </div>
-        </form>
-      </section>
-    </main>
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-blue-400 mt-8">
+          Secured by ClearPath Logistics © 2026
+        </p>
+      </div>
+    </div>
   );
 };

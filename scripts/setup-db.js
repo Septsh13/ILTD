@@ -1,6 +1,7 @@
 /**
- * GSN - idempotent development database setup.
- * Creates missing schema objects and upserts default testing accounts.
+ * ClearPath — Database Setup Script
+ * Run this ONCE to create tables and seed test users:
+ *   node scripts/setup-db.js
  */
 
 require('dotenv').config();
@@ -8,370 +9,225 @@ const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
+  host:     process.env.DB_HOST,
+  port:     process.env.DB_PORT,
   database: process.env.DB_NAME,
-  user: process.env.DB_USER,
+  user:     process.env.DB_USER,
   password: process.env.DB_PASSWORD,
 });
 
-async function ensureEnum(client, name, values) {
-  await client.query(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = '${name}') THEN
-        CREATE TYPE ${name} AS ENUM (${values.map((value) => `'${value}'`).join(', ')});
-      END IF;
-    END $$;
-  `);
-}
-
 async function setup() {
   const client = await pool.connect();
-
   try {
-    console.log(`Connected to PostgreSQL database: ${process.env.DB_NAME}\n`);
+    console.log('🔌 Connected to PostgreSQL...\n');
 
-    await client.query('BEGIN');
+    // ── Clean slate ────────────────────────────────────────────
+    await client.query(`DROP TABLE IF EXISTS audit_logs, complaint_identity, complaints, shipment_reviews, interactions, document_actions, documents, shipments, govt_officials, cha_agents, users CASCADE`);
+    await client.query(`DROP TYPE IF EXISTS user_role, shipment_status, document_status, complaint_status, rejection_reason CASCADE`);
+
+    // ── Enable UUID extension ────────────────────────────────────────────
     await client.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-    await ensureEnum(client, 'user_role', ['ADMIN', 'CHAPTER_PRESIDENT', 'NORMAL_USER']);
-    await ensureEnum(client, 'user_status', ['ACTIVE', 'INVITED', 'SUSPENDED']);
-    await ensureEnum(client, 'meeting_status', ['UPCOMING', 'COMPLETED', 'CANCELLED']);
-    await ensureEnum(client, 'referral_status', ['OPEN', 'WON', 'LOST']);
-    await ensureEnum(client, 'import_status', ['STARTED', 'COMPLETED', 'FAILED']);
+    // ── ENUM TYPES ───────────────────────────────────────────────────────
+    await client.query(`DO $$ BEGIN
+      CREATE TYPE user_role AS ENUM ('CHA_AGENT', 'GOVT_OFFICIAL', 'CBI', 'ADMIN');
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
 
+    await client.query(`DO $$ BEGIN
+      CREATE TYPE shipment_status AS ENUM ('PENDING', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'SUSPICIOUS');
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+
+    await client.query(`DO $$ BEGIN
+      CREATE TYPE document_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+
+    await client.query(`DO $$ BEGIN
+      CREATE TYPE complaint_status AS ENUM ('OPEN', 'UNDER_REVIEW', 'RESOLVED', 'CLOSED');
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+
+    await client.query(`DO $$ BEGIN
+      CREATE TYPE rejection_reason AS ENUM (
+        'INCOMPLETE_DOCUMENTATION','POLICY_VIOLATION','DUPLICATE_SUBMISSION',
+        'FRAUDULENT_CLAIM','MISSING_SIGNATURE'
+      );
+    EXCEPTION WHEN duplicate_object THEN NULL; END $$`);
+
+    console.log('✅ Enum types ready');
+
+    // ── TABLES ───────────────────────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS users (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        employee_id VARCHAR(50) NOT NULL UNIQUE,
-        full_name VARCHAR(150) NOT NULL,
-        email VARCHAR(255) NOT NULL UNIQUE,
+        id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        employee_id   VARCHAR(50)  NOT NULL UNIQUE,
+        full_name     VARCHAR(150) NOT NULL,
+        email         VARCHAR(255) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        role user_role NOT NULL,
-        status user_status NOT NULL DEFAULT 'ACTIVE',
-        member_category VARCHAR(120),
-        chapter_designation VARCHAR(120),
-        company_name VARCHAR(180),
-        company_designation VARCHAR(150),
-        company_location VARCHAR(150),
-        region VARCHAR(120),
-        chapter_id UUID,
-        president_id UUID REFERENCES users(id) ON DELETE SET NULL,
-        total_referrals INTEGER NOT NULL DEFAULT 0,
-        referrals_received INTEGER NOT NULL DEFAULT 0,
-        business_generated_inr NUMERIC(14, 2) NOT NULL DEFAULT 0,
-        meetings_attended INTEGER NOT NULL DEFAULT 0,
-        import_key VARCHAR(120),
-        phone VARCHAR(30),
-        age INTEGER,
-        gender VARCHAR(40),
-        bio TEXT,
-        profile_image_url TEXT,
-        is_flagged BOOLEAN NOT NULL DEFAULT FALSE,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    for (const statement of [
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(30)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(40)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url TEXT`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS chapter_designation VARCHAR(120)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS company_name VARCHAR(180)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS company_designation VARCHAR(150)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS company_location VARCHAR(150)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS referrals_received INTEGER NOT NULL DEFAULT 0`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS meetings_attended INTEGER NOT NULL DEFAULT 0`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS import_key VARCHAR(120)`,
-    ]) {
-      await client.query(statement);
-    }
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS chapters (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        name VARCHAR(150) NOT NULL UNIQUE,
-        city VARCHAR(120) NOT NULL,
-        region VARCHAR(120) NOT NULL,
-        country VARCHAR(120) NOT NULL DEFAULT 'India',
-        president_id UUID UNIQUE REFERENCES users(id) ON DELETE SET NULL,
-        import_key VARCHAR(120),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    await client.query(`ALTER TABLE chapters ADD COLUMN IF NOT EXISTS import_key VARCHAR(120)`);
-
-    await client.query(`
-      DO $$
-      BEGIN
-        IF NOT EXISTS (
-          SELECT 1 FROM information_schema.table_constraints
-          WHERE constraint_name = 'users_chapter_id_fkey'
-        ) THEN
-          ALTER TABLE users
-          ADD CONSTRAINT users_chapter_id_fkey
-          FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE SET NULL;
-        END IF;
-      END $$;
-    `);
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS referrals (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        from_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        to_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        title VARCHAR(180) NOT NULL,
-        amount_inr NUMERIC(14, 2) NOT NULL DEFAULT 0,
-        status referral_status NOT NULL DEFAULT 'OPEN',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        role          user_role    NOT NULL,
+        is_flagged    BOOLEAN      NOT NULL DEFAULT FALSE,
+        is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS meetings (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL,
-        title VARCHAR(180) NOT NULL,
-        description TEXT,
-        meeting_type VARCHAR(80) NOT NULL DEFAULT 'Online',
-        location VARCHAR(255),
-        meeting_link TEXT,
-        starts_at TIMESTAMPTZ NOT NULL,
-        status meeting_status NOT NULL DEFAULT 'UPCOMING',
-        created_by UUID REFERENCES users(id) ON DELETE SET NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-
-    for (const statement of [
-      `ALTER TABLE meetings ADD COLUMN IF NOT EXISTS description TEXT`,
-      `ALTER TABLE meetings ADD COLUMN IF NOT EXISTS location VARCHAR(255)`,
-      `ALTER TABLE meetings ADD COLUMN IF NOT EXISTS meeting_link TEXT`,
-      `ALTER TABLE meetings ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id) ON DELETE SET NULL`,
-      `ALTER TABLE meetings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`,
-    ]) {
-      await client.query(statement);
-    }
-
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS meeting_attendees (
-        meeting_id UUID NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
-        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        PRIMARY KEY (meeting_id, user_id)
+      CREATE TABLE IF NOT EXISTS cha_agents (
+        id             UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id        UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        license_number VARCHAR(100) NOT NULL UNIQUE,
+        agency_name    VARCHAR(200) NOT NULL,
+        contact_phone  VARCHAR(20),
+        created_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS chapter_analytics (
-        chapter_id UUID PRIMARY KEY REFERENCES chapters(id) ON DELETE CASCADE,
-        reported_member_count INTEGER NOT NULL DEFAULT 0,
-        total_business_generated_inr NUMERIC(14, 2) NOT NULL DEFAULT 0,
-        total_referrals_generated INTEGER NOT NULL DEFAULT 0,
-        total_meetings_conducted INTEGER NOT NULL DEFAULT 0,
-        source_import_id UUID,
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS govt_officials (
+        id          UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id     UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        department  VARCHAR(150) NOT NULL,
+        designation VARCHAR(150) NOT NULL,
+        office_code VARCHAR(50)  NOT NULL,
+        created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS import_logs (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        import_key VARCHAR(120) NOT NULL,
-        source_filename TEXT NOT NULL,
-        status import_status NOT NULL DEFAULT 'STARTED',
-        total_rows INTEGER NOT NULL DEFAULT 0,
-        valid_rows INTEGER NOT NULL DEFAULT 0,
-        invalid_rows INTEGER NOT NULL DEFAULT 0,
-        inserted_users INTEGER NOT NULL DEFAULT 0,
-        updated_users INTEGER NOT NULL DEFAULT 0,
-        inserted_chapters INTEGER NOT NULL DEFAULT 0,
-        updated_chapters INTEGER NOT NULL DEFAULT 0,
-        started_by UUID REFERENCES users(id) ON DELETE SET NULL,
-        started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        completed_at TIMESTAMPTZ,
-        error_message TEXT,
-        metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+      CREATE TABLE IF NOT EXISTS shipments (
+        id               VARCHAR(50)     PRIMARY KEY,
+        title            VARCHAR(255)    NOT NULL,
+        description      TEXT            NOT NULL,
+        created_by       UUID            NOT NULL REFERENCES users(id),
+        status           shipment_status NOT NULL DEFAULT 'PENDING',
+        approved_by      UUID            REFERENCES users(id),
+        decision         VARCHAR(50),
+        remarks          TEXT,
+        is_cha_accepted  BOOLEAN         NOT NULL DEFAULT FALSE,
+        created_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS import_errors (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        import_log_id UUID NOT NULL REFERENCES import_logs(id) ON DELETE CASCADE,
-        row_number INTEGER,
-        message TEXT NOT NULL,
-        row_data JSONB,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS shipment_reviews (
+        id               UUID            PRIMARY KEY DEFAULT uuid_generate_v4(),
+        shipment_id      VARCHAR(50)     NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
+        message          TEXT            NOT NULL,
+        created_by       UUID            NOT NULL REFERENCES users(id),
+        created_at       TIMESTAMPTZ     NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS import_source_rows (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        import_key VARCHAR(120) NOT NULL,
-        row_number INTEGER NOT NULL,
-        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-        chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL,
-        row_hash VARCHAR(64) NOT NULL,
-        raw_data JSONB NOT NULL,
-        imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-        UNIQUE (import_key, row_number)
+      CREATE TABLE IF NOT EXISTS complaints (
+        id              UUID             PRIMARY KEY DEFAULT uuid_generate_v4(),
+        tracking_token  VARCHAR(64)      NOT NULL UNIQUE,
+        shipment_id     VARCHAR(50)      REFERENCES shipments(id) ON DELETE SET NULL,
+        subject         VARCHAR(255)     NOT NULL,
+        description     TEXT             NOT NULL,
+        related_user_id UUID             REFERENCES users(id),
+        status          complaint_status NOT NULL DEFAULT 'OPEN',
+        cbi_assigned_to UUID             REFERENCES users(id),
+        cbi_message     TEXT,
+        admin_notes     TEXT,
+        created_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ      NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
-      CREATE TABLE IF NOT EXISTS user_settings (
-        user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        notification_preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-        privacy_preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-        security_preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-        account_preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-        language_preference VARCHAR(40) NOT NULL DEFAULT 'English',
-        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS complaint_identity (
+        id              UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
+        complaint_id    UUID        NOT NULL UNIQUE REFERENCES complaints(id) ON DELETE CASCADE,
+        encrypted_name  TEXT        NOT NULL,
+        encrypted_email TEXT        NOT NULL,
+        encrypted_phone TEXT,
+        iv              TEXT        NOT NULL,
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `);
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS audit_logs (
-        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-        role user_role,
-        action VARCHAR(255) NOT NULL,
-        status_code INTEGER NOT NULL,
-        metadata JSONB,
-        ip_address VARCHAR(50),
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        id          UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
+        user_id     UUID         REFERENCES users(id),
+        role        user_role,
+        action      VARCHAR(255) NOT NULL,
+        status_code INTEGER      NOT NULL,
+        metadata    JSONB,
+        ip_address  VARCHAR(50),
+        created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `);
 
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_chapter_id ON users(chapter_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_president_id ON users(president_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_import_key ON users(import_key)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_chapters_president_id ON chapters(president_id)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_import_logs_started_at ON import_logs(started_at DESC)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_import_source_rows_import_key ON import_source_rows(import_key)`);
-    await client.query(`CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC)`);
+    console.log('✅ Tables ready\n');
 
-    const adminHash = await bcrypt.hash('123456', 12);
-    const testHash = await bcrypt.hash('123456', 12);
+    // ── SEED USERS ───────────────────────────────────────────────────────
+    const ADMIN_PASS  = 'Admin@123';
+    const TEST_PASS   = 'Test@1234';
 
-    await client.query(`
-      INSERT INTO chapters (name, city, region)
-      VALUES ('Sample GSN Chapter', 'Mumbai', 'India - West')
-      ON CONFLICT (name) DO UPDATE SET city = EXCLUDED.city, region = EXCLUDED.region
-    `);
+    const adminHash = await bcrypt.hash(ADMIN_PASS, 12);
+    const testHash  = await bcrypt.hash(TEST_PASS, 12);
 
-    await client.query(`
-      UPDATE chapters
-      SET president_id = NULL
-      WHERE president_id IN (
-        SELECT id FROM users
-        WHERE email IN ('admin@gsn.network', 'cp1@gsn.network', 'user@gsn.network')
-        AND employee_id NOT IN ('admin', 'CP1', 'user')
-      )
-    `);
-
-    await client.query(`
-      DELETE FROM users
-      WHERE email IN ('admin@gsn.network', 'cp1@gsn.network', 'user@gsn.network')
-      AND employee_id NOT IN ('admin', 'CP1', 'user')
-    `);
-
-    await client.query(`
-      UPDATE chapters
-      SET president_id = NULL
-      WHERE name IN ('Mumbai Bay', 'Bangalore Elite', 'Delhi Achievers', 'Pune Progressors')
-    `);
-
-    await client.query(`
-      DELETE FROM users
-      WHERE employee_id IN ('ADMIN001', 'CP001', 'CP002', 'USER001', 'USER002', 'USER003', 'USER004', 'USER005')
-    `);
-
-    await client.query(`
-      DELETE FROM chapters
-      WHERE name IN ('Mumbai Bay', 'Bangalore Elite', 'Delhi Achievers', 'Pune Progressors')
-    `);
-
-    await client.query(`
-      DELETE FROM meetings
-      WHERE title IN (
-        'Global Leadership Summit',
-        'Business Growth Workshop',
-        'Networking Night',
-        'Referral Introduction'
-      )
-      OR chapter_id IS NULL
-    `);
-
-    const seedUsers = [
-      ['admin', 'Global Admin', 'admin@gsn.network', 'ADMIN', 'Leadership', 'Global', null, null, adminHash, 156, 4875000],
-      ['CP1', 'Chapter President CP1', 'cp1@gsn.network', 'CHAPTER_PRESIDENT', 'Chapter Leadership', 'India - West', 'Sample GSN Chapter', null, testHash, 128, 2475000],
-      ['user', 'Normal User', 'user@gsn.network', 'NORMAL_USER', 'Business Consultant', 'India - West', 'Sample GSN Chapter', 'CP1', testHash, 42, 875000],
+    const users = [
+      { employee_id: 'ADMIN001', full_name: 'System Administrator', email: 'admin@clearpath.gov',   role: 'ADMIN',        hash: adminHash },
+      { employee_id: 'CHA001',   full_name: 'Arjun Mehta',          email: 'cha001@clearpath.gov',  role: 'CHA_AGENT',    hash: testHash  },
+      { employee_id: 'CHA002',   full_name: 'Ravi Kumar',            email: 'cha002@clearpath.gov',  role: 'CHA_AGENT',    hash: testHash  },
+      { employee_id: 'GOVT001',  full_name: 'Priya Sharma',          email: 'govt001@clearpath.gov', role: 'GOVT_OFFICIAL', hash: testHash },
+      { employee_id: 'GOVT002',  full_name: 'Sneha Iyer',            email: 'govt002@clearpath.gov', role: 'GOVT_OFFICIAL', hash: testHash },
+      { employee_id: 'CBI001',   full_name: 'Vikram Singh',          email: 'cbi001@clearpath.gov',  role: 'CBI',          hash: testHash },
     ];
 
-    for (const [employeeId, fullName, email, role, category, region, chapterName, presidentEmployeeId, hash, referrals, business] of seedUsers) {
-      await client.query(`
-        INSERT INTO users
-          (employee_id, full_name, email, password_hash, role, member_category, region,
-           chapter_id, president_id, total_referrals, business_generated_inr)
-        VALUES (
-          $1, $2, $3, $4, $5, $6, $7,
-          (SELECT id FROM chapters WHERE name = $8),
-          (SELECT id FROM users WHERE employee_id = $9),
-          $10, $11
-        )
-        ON CONFLICT (employee_id) DO UPDATE SET
-          full_name = EXCLUDED.full_name,
-          email = EXCLUDED.email,
-          password_hash = EXCLUDED.password_hash,
-          role = EXCLUDED.role,
-          member_category = EXCLUDED.member_category,
-          region = EXCLUDED.region,
-          chapter_id = EXCLUDED.chapter_id,
-          president_id = EXCLUDED.president_id,
-          total_referrals = EXCLUDED.total_referrals,
-          business_generated_inr = EXCLUDED.business_generated_inr,
-          is_active = TRUE,
-          status = 'ACTIVE'
-      `, [employeeId, fullName, email, hash, role, category, region, chapterName, presidentEmployeeId, referrals, business]);
+    for (const u of users) {
+      await client.query(
+        `INSERT INTO users (employee_id, full_name, email, password_hash, role)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (employee_id) DO UPDATE
+           SET password_hash = EXCLUDED.password_hash,
+               full_name     = EXCLUDED.full_name`,
+        [u.employee_id, u.full_name, u.email, u.hash, u.role]
+      );
+      console.log(`   👤 ${u.role.padEnd(14)} ${u.employee_id}`);
     }
 
-    await client.query(`
-      UPDATE chapters
-      SET president_id = (SELECT id FROM users WHERE employee_id = 'CP1')
-      WHERE name = 'Sample GSN Chapter'
-    `);
+    // ── CHA agent profiles ────────────────────────────────────────────────
+    for (const [empId, license, agency] of [
+      ['CHA001', 'CHA-LIC-2026-001', 'Mehta Clearing Agency'],
+      ['CHA002', 'CHA-LIC-2026-002', 'Kumar Logistics Pvt Ltd'],
+    ]) {
+      await client.query(
+        `INSERT INTO cha_agents (user_id, license_number, agency_name)
+         SELECT id, $2, $3 FROM users WHERE employee_id = $1
+         ON CONFLICT (license_number) DO NOTHING`,
+        [empId, license, agency]
+      );
+    }
 
-    await client.query(`
-      INSERT INTO meetings (chapter_id, title, description, meeting_type, location, meeting_link, starts_at, status, created_by)
-      SELECT c.id, 'Sample Chapter Growth Meeting', 'Monthly business networking and referral review.', 'Online',
-             'Google Meet', 'https://meet.google.com/sample-gsn', NOW() + INTERVAL '5 days', 'UPCOMING', u.id
-      FROM chapters c
-      JOIN users u ON u.employee_id = 'CP1'
-      WHERE c.name = 'Sample GSN Chapter'
-      AND NOT EXISTS (SELECT 1 FROM meetings WHERE title = 'Sample Chapter Growth Meeting')
-    `);
+    // ── Govt official profiles ────────────────────────────────────────────
+    for (const [empId, dept, desig, code] of [
+      ['GOVT001', 'Customs & Border Protection', 'Senior Inspector',  'NHAVA-SHEVA-01'],
+      ['GOVT002', 'Ministry of Commerce',        'Document Reviewer', 'MUMBAI-PORT-02'],
+    ]) {
+      await client.query(
+        `INSERT INTO govt_officials (user_id, department, designation, office_code)
+         SELECT id, $2, $3, $4 FROM users WHERE employee_id = $1
+         ON CONFLICT DO NOTHING`,
+        [empId, dept, desig, code]
+      );
+    }
 
-    await client.query('COMMIT');
+    console.log('\n✅ All users seeded!\n');
+    console.log('┌──────────────────────────────────────────────┐');
+    console.log('│           LOGIN CREDENTIALS                  │');
+    console.log('├──────────────┬──────────────────────────────┤');
+    console.log('│ ADMIN001     │ Admin@123                    │');
+    console.log('│ CHA001/CHA002│ Test@1234                    │');
+    console.log('│ GOVT001/002  │ Test@1234                    │');
+    console.log('└──────────────┴──────────────────────────────┘');
+    console.log('\n🚀 Open http://localhost:5173 and log in!\n');
 
-    console.log('GSN schema and seed data are ready.\n');
-    console.log('LOGIN CREDENTIALS');
-    console.log('admin / 123456');
-    console.log('CP1   / 123456');
-    console.log('user  / 123456');
   } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('Setup failed:', err.message);
+    console.error('❌ Setup failed:', err.message);
     process.exit(1);
   } finally {
     client.release();
